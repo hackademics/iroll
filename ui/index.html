@@ -1,0 +1,35 @@
+<html>
+<head>
+    <title>SHAKE-A-DAY.COM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="dapp.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.5.1/web3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous"></script>
+    <script src="dapp.js"></script>
+</head>
+<body>
+<div id="main">
+    <table id="hud">
+        <tr>
+            <!-- PLAYER CELL -->
+            <td id="hud-player">
+                <div class="hud-banner">PLAYER</div>
+                <div id="wallet-connected">
+                    <a onclick="DApp.connect();" href="javascript:void(0);" id="btnNetworkConnect">connect </a>
+                </div>
+                <div id="wallet-not-connected">
+                    <a onclick="DApp.test();" href="javascript:void(0);" id="btnNetworkConnect">disconnect </a>
+                </div>
+            </td>
+            <!-- GAME CELL -->
+            <td id="hud-game">
+            </td>
+            <!-- CONTENT CELL -->
+            <td id="hud-content">
+                <div class="hud-banner">LATEST</div>
+            </td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>
