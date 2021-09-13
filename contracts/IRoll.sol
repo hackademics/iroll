@@ -117,7 +117,7 @@ contract IRoll is IIRoll, Ownable, PullPayment, ReentrancyGuard, Pausable, IERC7
         RUID.increment();      
 
         /// init roll struct
-        Roll memory r = mRoll[RUID.current()];
+        Roll storage r = mRoll[RUID.current()];
         r.UID = RUID.current();
         r.PUID = p.UID; 
         r.player = payable(msg.sender);
@@ -213,7 +213,7 @@ contract IRoll is IIRoll, Ownable, PullPayment, ReentrancyGuard, Pausable, IERC7
     }
 
     function testReward() public returns(uint256){
-        Pot memory p = getPot(1);
+        //Pot memory p = getPot(1);
         token.send(payable(msg.sender), 1, "0x");
         return token.balanceOf(address(this));
     }             
@@ -270,7 +270,7 @@ contract IRoll is IIRoll, Ownable, PullPayment, ReentrancyGuard, Pausable, IERC7
         /// new incremental uinque id for pot
         PUID.increment();
 
-        Pot memory p = mPot[PUID.current()];
+        Pot storage p = mPot[PUID.current()];
             p.UID = PUID.current();       
             p.wallet = _wallet;
             p.entry = _entry;

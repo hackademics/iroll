@@ -38,6 +38,12 @@ contract('IRoll', async (accounts) => {
     });
   });
 
+  it("check pot balance", async () => {
+    await instance.getPotBalance(1).then(async (result) => {
+      assert.equal(web3.utils.fromWei(result, 'ether'), 0.042);
+    });
+  });
+
   
 
   it("test reward token transfer", async () => {    
