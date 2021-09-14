@@ -1,7 +1,167 @@
-## SHAKE-A-DAY.COM
+## IRoll.io 
 
-[Click Here](https://github.com/hackademics/irollio.contracts) to view the ShakeADay.sol smart contract project.
+https://iroll.io
 
-`PM> Add-Migration InitialCreate`
+Smart contracts for generating and interfacing with random dice results.  Inspired by classic tavern dice game 'Shake A Day'.
 
- truffle test  --show-events
+Game play overview:
+
+01. Player selects Pot balance they want to roll for (IRoll.getPot(uint256))
+02. Player submits transaction equal to selected Pot Entry Fee (IRoll.roll())
+03. IRoll contract receives payment and deposits entry fee to total Pot balance 
+04. IRoll contract requests uint256 random number from Chainlink VRF (IRollRNG.request())
+05. IRoll contract handles VRF random number callback (IRoll.vrfCallback())
+06. Random number is transformed into a representation of a random 5 dice roll result (uint256.getDice())
+07. Dice result is scored to determine if a Jackpot Winner or Token Reward combo winner (IRoll.score())
+08. Jackpot winners are sent payout (according to Pot settings) in ether contract is holding (IRoll.pay())
+09. IRoll token rewards are transferred from contract to player for roll combinations (IRoll.reward()) 
+10. Players roll results are saved into contract Roll[] array
+
+Contracts:
+
+IRoll.sol - main logic of application
+IRollRNG.sol - handles random number requests to Chainlink VRF
+IRollToken.sol - ERC777 token for rewards
+
+/Library/Dice.sol - contains functions for creating and scoring dice combinations.
+
+Jackpot Options:
+
+Pot owners are able to choose from 4 different types of combonations for Jackpot wins on creation.
+These settings will effect the player's odds of winning pots.
+
+1. Five of a Kind - 5 dice result all match any number between 1-6 (i.e. [2,2,2,2,2])
+2. All Sixes - 5 dice result where all die equal 6 [6,6,6,6,6]
+3. Player Picks - 5 dice result that matches player's submitted dice picks (any combos)
+4. Custom Roll Match - 5 dice result set by Pot Owner for player to match for win (any combo)
+
+Player Picks and Custom Roll Matches work in addition to Five of Kind or All Sixes giving the player an additional chance to win.
+
+Reward Combinations:
+
+IRoll tokens are rewarded to players for roll combinations that don't result in Jackpots.
+
+1. Four of a Kind   [1,1,1,1,5]
+2. Large Straight   [1,2,3,4,5]
+3. Full House       [1,1,2,2,2]
+4. Small Straight   [1,2,3,4,6]
+5. Three of a Kind  [1,1,1,4,5]
+6. Two Pair         [1,1,3,5,6]
+7. Single Pair      [1,1,4,6,3]
+
+
+Pot Reward Token Array:
+
+The token amounts won per combination are stored in an uint256[11] array assigned to every pot. This allow the pot owner adjust the tokens rewarded per pot depending on the difficulty set in winning Jackpots, entry fees and time intervals.
+
+[0]  = Five of a Kind
+[1]  = All Sixes
+[2]  = Player Picks
+[3]  = Custom Roll
+[4]  = Four of a Kind
+[5]  = Large Straight
+[6]  = Full House
+[7]  = Small Straight
+[8]  = Three of a Kind
+[9]  = Two Pair
+[10] = Single Pair
+
+Pot Settings:
+
+The IRoll contract can create and store multiple pots for players to play against.  Pots have unique parameters that allow pot creators to adjust the level of difficulty or time between interactions.
+
+Pot struct parameters:
+
+UID      = unique Id for Pot based on counter
+wallet   = IRoll wallet address to use besides IRoll contract token balance for reward distribution
+entry    = the entry fee amount the player must pay for chance to win
+interval = amount of time the player must wait between rolls in minutes
+fee      = percent of player jackpot payouts paid to Pot Owner
+seed     = percent of the Jackpot to leave behind for other players 
+sixes    = force Jackpots to consist of all 6 combo to win
+picks    = allow player to win Jackpot by submitting their own picks to match roll result
+custom   = allow pot creator to choose roll combination for players to match
+rewards[11] = array of token amounts to reward players for winning combinations
+
+
+Pot Seeding:
+
+Pot Owners must seed their pots with a beginning balance in order to activate the Pot.  If Pot balance falls below twice the entry fee, the Pot will become inactive as there is little incentive for players to roll.  Once the Pot balance is seeded, it will reappear for play.  
+
+Jackpot Seeding:
+
+Jackpots are not 'winner takes all'.  A percent of every Jackpot win will retain, a Pot Owner decided percent, of winnings to be left for the next players.  This percent amount can be set in the "Pot.seed" parameter.
+
+Jackpot Payouts:
+
+Jackpot winnings use the OpenZeppelin Pull Payment lib to transfer winnings to an escrow account for the player.  The player is then responsible for withdrawing their winnings via the Pull Payment "withdraw()" method.
+
+Jackpot settings should not change after creation if they will change the odds between past and future players of that pot.
+
+Jackpot Fees:
+
+Jackpot fees should be collected to fund the costs of providing Chainlink VRF numbers, development seeding and operation of application.
+
+Roll struct:
+
+The Roll struct is for storing the specific results generated by the player's roll.  The struct is created and stored before the VRF request is made and then referenced on the VRF callback to match the request back to the player.  Rolls are stored in the main contracts Roll[] array.
+
+UID      = unique Id for Roll based on counter
+PUID     = Pot UID the roll was for
+jackpot  = was the roll a jackpot winner
+player   = address of the player roll belongs too
+vrfId    = the Request Id generated by Chainlink VRF to identify random number generation
+vrfNum   = the random number generated by Chainlink VRF used to create dice roll results
+payout   = amount in wei of the total jackpot won minus seed and fees
+tokens   = amount of tokens won and transferred for any roll combinations
+fee      = amount of fee paid to pot owners for vrf fees, dev and seeding
+created  = block timestamp
+dice[5]  = array of dice results generated from vrfNum 
+picks[5] = array of dice that player submitted for Player Pick pots
+
+
+IROLL Token
+
+Symbol: IROLL
+Name: IROLL.IO
+Version: IROLL VERSION 1.0
+Total Supply = 2,000,000,000
+
+Website:  https://iroll.io/token
+
+
+IROLL Token Wallets and Intital Distribution
+
+x0 - Reward wallet 
+     used to seed IRoll contract with reward tokens to be distributed.
+     locked and can only send funds to reward contracts
+     Initial Balance: 1,000,000,000 IROLL Tokens
+     address: 
+
+x1 - Company wallet
+     stores tokens to be used for seeding, operations, oracle payments, etc
+     not locked but needs to be rug proof
+     Initial Balance: 400,000,000 IROLL Tokens
+     address: 
+
+x2 - Developer wallet
+     stores tokens to be distributed to developers and contributors
+     locked can only be sent to developer wallets
+     Initial Balance: 250,000,000
+     address:
+
+x3 - Founder wallet
+     stores tokens to be distributed to founder over period of time
+     time lock with 4 year vesting period
+     Initial Balance: 250,000,000
+     address:
+
+x4 - Foundation wallet
+     stores tokens to be used for donations, sponsorships, charitable
+     Intial Balance: 100,000,000
+     address: 
+
+x5 - Burn wallet
+     holds tokens that need to be burned
+     Initial Balance: 0
+     address:

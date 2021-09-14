@@ -34,9 +34,6 @@ contract IRollRNG is IIRollRNG, VRFConsumerBase, Ownable {
     /// store the vrf request id for caller
     mapping(address => bytes32) mVRF;
 
-    /// store the Roll UID for callback
-    mapping(bytes32 => uint256) mRUID;
-
     /// store the Pot UID for callback
     mapping(bytes32 => uint256) mPUID;
 
@@ -55,9 +52,9 @@ contract IRollRNG is IIRollRNG, VRFConsumerBase, Ownable {
     }
 
     /// @dev make request to Chainlink VRF
-    function request(uint256 _puid, uint256 _ruid) public override returns (bytes32) {
-        require(_puid > 0 && _ruid > 0, "ids");
-        require(callerContract == msg.sender, "caller");
+    function request(uint256 _puid) public override returns (bytes32) {
+        require(_puid > 0, "ids");
+        require(msg.sender == callerContract, "caller");
 
         /// check LINK balance
         require(LINK.balanceOf(address(this)) >= vrfFee, "linkfee");
@@ -68,12 +65,13 @@ contract IRollRNG is IIRollRNG, VRFConsumerBase, Ownable {
         /// request random number from vrf
         bytes32 requestId = requestRandomness(vrfKeyHash, vrfFee);
         
-        /// set variables to access on vrf response
+        /// set Pot UID for access in callback
         mPUID[requestId] = _puid;
-        mRUID[requestId] = _ruid;
+
+        /// set caller contract for callback
         mCaller[requestId] = msg.sender;
         
-        emit VRFRequested(msg.sender, requestId, _puid, _ruid, block.timestamp);
+        emit VRFRequested(msg.sender, requestId, _puid, block.timestamp);
         
         return requestId;
     }   
@@ -81,17 +79,19 @@ contract IRollRNG is IIRollRNG, VRFConsumerBase, Ownable {
     /// @dev handles return from VRF and forwards to request caller
     /// do not REVERT this method
     function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override{
-        emit VRFFulfilled(msg.sender, requestId, mPUID[requestId], mRUID[requestId], block.timestamp);
-        IRoll(mCaller[requestId]).vrfCallback(requestId, randomness, mPUID[requestId], mRUID[requestId]);
+        emit VRFFulfilled(msg.sender, requestId, mPUID[requestId], block.timestamp);
+        IRoll(mCaller[requestId]).vrfCallback(requestId, randomness, mPUID[requestId]);
     }  
 
     /// @dev MOCK REQUEST for testing.  REMOVE before MAINNET
-    function mockRequest(uint256 _puid, uint256 _ruid) public override onlyOwner returns (bytes32) {         
-        //request randomoness
+    /// todo REMOVE
+    function mockRequest(uint256 _puid) public override onlyOwner returns (bytes32) {         
+        require(_puid > 0, "ids");  
+
         bytes32 requestId = keccak256(abi.encodePacked(block.difficulty, block.timestamp));
         uint256 randomness = uint(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
 
-        IRoll(msg.sender).vrfCallback(requestId, randomness, _puid, _ruid);
+        IRoll(msg.sender).vrfCallback(requestId, randomness, _puid);
 
         return requestId;
     }

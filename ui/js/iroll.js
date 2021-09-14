@@ -45,20 +45,17 @@ const DApp = {
     },
     updateAccounts: async function(accts){
         DApp.accounts = accts || await DApp.web3.eth.getAccounts();
-        //console.log("acct");
     },
     initContracts: async function () {        
         const netId = await DApp.web3.eth.net.getId();
-        console.log(netId);
         try{
-            DApp.getContractJSON('../build/contracts/IRoll.json').then(function (data) {
-                //console.log(data);
+            DApp.getContractJSON('build/contracts/IRoll.json').then(function (data) {
                 console.log(data.networks[5777].address);
-                //if (!data.networks[netId]) {
-                    //console.log("404");
-                    //return;
-                //}            
-                DApp.contracts.IRoll = new DApp.web3.eth.Contract(data.abi, data.networks[5777].address);
+                if (!data.networks[netId]) {
+                    console.log("contract not found on network");
+                    return;
+                }            
+                DApp.contracts.IRoll = new DApp.web3.eth.Contract(data.abi, data.networks[netId].address);
             }); 
         }catch(error){
             console.log(error);

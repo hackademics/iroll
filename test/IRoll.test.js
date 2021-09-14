@@ -15,15 +15,14 @@ contract('IRoll', async (accounts) => {
   let seed = 30;
   let fee = 10;
   let interval = 1;
-  let rewards = [256, 512, 256, 256, 128, 64, 32, 16, 8, 4, 2];
-  let customRoll = [1, 1, 1, 1, 1];
   let sixes = 0;
   let picks = 0;
   let custom = 0;
-
-  let invalidCustomRoll = [0, 7, 8, 9, 10];
-
+  let rewards = [256, 512, 256, 256, 128, 64, 32, 16, 8, 4, 2];
+  let customRoll = [1, 1, 1, 1, 1];
   let playerPicks = [1, 2, 3, 4, 5];
+
+  let invalidCustomRoll = [0, 7, 8, 9, 10];  
   let invalidPlayerPicks = [1, 2, 3, 4, 0];
 
   beforeEach('initialize', async () => {
@@ -32,119 +31,57 @@ contract('IRoll', async (accounts) => {
     this.erc1820 = await singletons.ERC1820Registry(accounts[0]);
   });
 
-  it("creates a new pot", async () => {
-    await instance.createPot(wallet, entry, interval, seed, fee, sixes, picks, custom, customRoll, rewards).then(async (result) => {
-      assert.equal(result.receipt.status, true);
-    });
+  it("check that contract balance is zero", async() =>{
+    assert.equal(await token.balanceOf.call(instance.address), 0);
   });
 
-  it("check pot balance", async () => {
-    await instance.getPotBalance(1).then(async (result) => {
-      assert.equal(web3.utils.fromWei(result, 'ether'), 0.042);
-    });
+  it("transfer reward tokens to contract", async () => {
+      await token.transfer(instance.address, web3.utils.toBN(1), { from: accounts[0] }).then(async (result) => {
+        assert.equal(await token.balanceOf.call(instance.address), 1);
+      });
   });
 
-  
-
-  it("test reward token transfer", async () => {    
-      //await token.transfer(wallet, web3.utils.toBN('1'), { from: accounts[0] }).then(async (result) => {
-        //assert.equal(await token.balanceOf.call(wallet), 1);
-      //});
-
-    //await token.transfer(instance.address, web3.utils.toBN('1'), { from: accounts[0], value:1 }).then(async (result) => {
-      //assert.equal(await token.balanceOf.call(instance.address), 1);
-    //});
-
-    const receipt = await token.send(instance.address, 1, '0x', { from:accounts[0] });
-
-      //await instance.testReward.call().then(async (result) => {
-        //assert.equal(result.receipt.status, true);
-        //console.log(result.toString());
-      //});
-  });
-  /*
   it("roll reverts because no pots exist yet", async () => {
-    await truffleAssert.reverts(instance.roll(1, playerPicks, { from: accounts[0], value: 0 }), "revert 404");
+    await truffleAssert.reverts(instance.roll(web3.utils.toBN(1), playerPicks, { from: accounts[0], value: 0 }), "revert 404");
   });
 
-
-
-  it("roll reverts because invalid fee", async () => {
-    await truffleAssert.reverts(instance.roll(1, playerPicks, { from: accounts[0], value: 0 }), "fee");
+  it("creates a new pot", async () => {
+    await instance.createPot(wallet, entry, interval, seed, fee, sixes, picks, custom, customRoll, rewards)
+          .then(async (result) => {
+            assert.equal(result.receipt.status, true);
+          });
   });
 
-  it("roll reverts because selected pot not seeded", async () => {
-    await truffleAssert.reverts(instance.roll(1, playerPicks, { from: accounts[0], value: entry }), "seed");
+  it("get single pot by UID confirm balance is zero", async () => {
+    await instance.getPot(web3.utils.toBN(1)).then(async (result) => {
+      assert.equal(result.balance, 0);
+    });
   });
 
   it("seed selected pot with insufficient seed", async () => {
-    await instance.seedPot(1, { from: accounts[0], value: entry }).then(async (result) => {
+    await instance.seedPot(web3.utils.toBN(1), { from: accounts[0], value: entry }).then(async (result) => {
       assert.equal(result.receipt.status, true);
     });
   });
 
   it("roll reverts because selected pot not seeded enough", async () => {
-    await truffleAssert.reverts(instance.roll(1, playerPicks, { from: accounts[0], value: entry }), "seed");
+    await truffleAssert.reverts(instance.roll(web3.utils.toBN(1), playerPicks, { from: accounts[0], value: entry }), "seed");
   });
 
   it("seed selected pot with 20 times the entry fee", async () => {
-    await instance.seedPot(1, { from: accounts[0], value: (entry*20) }).then(async (result) => {
+    await instance.seedPot(web3.utils.toBN(web3.utils.toBN(1)), { from: accounts[0], value: web3.utils.toBN((entry * 20)) }).then(async (result) => {
       assert.equal(result.receipt.status, true);
     });
   });
 
-  it("check pot balance", async () => {
+  it("verify pot balance equal to two previous seeds", async () => {
     await instance.getPotBalance(1).then(async (result) => {
       assert.equal(web3.utils.fromWei(result, 'ether'), 0.042);
     });
   });
 
-  it("initiates roll and gets vrfrequest id", async () => {
-    await instance.roll(1, playerPicks, { from: accounts[0], value: entry }).then(async (result) => {
-      assert.equal(result.receipt.status, true);
-    });
-  });
-
-  it("test pay jackpot then get payments balance then withdraw", async () => {
-    await instance.testPay(1).then(async (result) => {
-      assert.equal(result.receipt.status, true);
-    });
-  });
-
-  it("check pull payment balance", async () => {
-    await instance.payments(accounts[0]).then(async (result) => {
-      console.log(web3.utils.fromWei(result, 'ether'));
-    });
-  });
-
-  it("get single roll by UID", async () => {
-    await instance.getRoll(1).then(async (result) => {
-      console.log(result);
-    });
-  });
-
-  it("get list of all rolls", async () => {
-    await instance.getRolls().then(async (result) => {
-      console.log(result);
-    });
-  });
-
-  it("get list of all pots", async () => {
-    await instance.getPots().then(async (result) => {
-      console.log(result);
-    });
-  });
-
-  it("get single pot by UID", async () => {
-    await instance.getPot(1).then(async (result) => {
-      console.log(result);
-    });
-  });
-
-  it("player withdraws balance", async () => {
-    await instance.withdraw(accounts[0]).then(async (result) => {
-      assert.equal(result.receipt.status, true);
-    });
+  it("roll reverts because invalid entry fee", async () => {
+    await truffleAssert.reverts(instance.roll(1, playerPicks, { from: accounts[0], value: 0 }), "fee");
   });
 
   it("pause contract", async () => {
@@ -163,6 +100,58 @@ contract('IRoll', async (accounts) => {
     });
   });
 
+  it("set pot to inactive", async () => {
+    await instance.setPotActive(web3.utils.toBN(1), false).then(async (result) => {
+      assert.equal(result.receipt.status, true);
+    });
+  });
+
+  it("getpot should revert due to pot being inactive", async () => {
+    await truffleAssert.reverts(instance.getPot(web3.utils.toBN(1)), "revert 404");
+  });
+
+  it("set pot to active", async () => {
+    await instance.setPotActive(web3.utils.toBN(1), true).then(async (result) => {
+      assert.equal(result.receipt.status, true);
+    });
+  });
+
+  it("initiates roll and is successful in getting back vrfrequest id", async () => {
+    await instance.roll(web3.utils.toBN(1), playerPicks, { from: accounts[0], value: web3.utils.toBN(entry) }).then(async (result) => {
+      assert.equal(result.receipt.status, true);
+    });
+  });
+
+  it("test pay jackpot then get payments balance then withdraw", async () => {
+    await instance.testPay(1).then(async (result) => {
+      assert.equal(result.receipt.status, true);
+    });
+  });
+
+  it("check pull payment balance", async () => {
+    await instance.payments(accounts[0]).then(async (result) => {
+      assert.equal(web3.utils.fromWei(result, 'ether'), 0.0294);
+    });
+  });
+
+  it("player withdraws balance", async () => {
+    await instance.withdrawPayments(accounts[0]).then(async (result) => {
+      assert.equal(result.receipt.status, true);
+    });
+  });
+
+  //it("get single roll by UID", async () => {
+    //await instance.getRoll(1).then(async (result) => {
+      //console.log(result.PUID, 1);
+    //});
+  //});
+
+  it("get list of all rolls", async () => {
+    await instance.getRolls().then(async (result) => {
+      assert.equal(result.length, 1);
+    });
+  });
+
   it("all sixes creation", async () => {
     await instance.createPot(wallet, entry, interval, seed, fee, 1, 0, 0, customRoll, rewards).then(async (result) => {
       assert.equal(result.receipt.status, true);
@@ -171,12 +160,6 @@ contract('IRoll', async (accounts) => {
 
   it("all sixes seed with 4 times the entry fee", async () => {
     await instance.seedPot(2, { from: accounts[0], value: (entry * 4) }).then(async (result) => {
-      assert.equal(result.receipt.status, true);
-    });
-  });
-
-  it("all sixes roll gets vrfrequest id", async () => {
-    await instance.roll(2, playerPicks, { from: accounts[0], value: entry }).then(async (result) => {
       assert.equal(result.receipt.status, true);
     });
   });
@@ -196,13 +179,14 @@ contract('IRoll', async (accounts) => {
   });
 
   it("all sixes check players balance", async () => {
-    await instance.payments.call(accounts[0]).then(async (result) => {
-      assert.equal(result, 9240000000000000);
+    await instance.payments(accounts[0]).then(async (result) => {
+      //console.log(result.toString());
+      assert.equal(result, 5600000000000000);
     });
   });
 
   it("all sixes player withdraws balance", async () => {
-    await instance.withdraw(accounts[0]).then(async (result) => {
+    await instance.withdrawPayments(accounts[0]).then(async (result) => {
       assert.equal(result.receipt.status, true);
     });
   });
@@ -241,12 +225,13 @@ contract('IRoll', async (accounts) => {
 
   it("player pick check players balance", async () => {
     await instance.payments.call(accounts[0]).then(async (result) => {
-      assert.equal(result, 2772000000000000);
+      //console.log(result.toString());
+      assert.equal(result, 5600000000000000);
     });
   });
 
   it("player pick player withdraws balance", async () => {
-    await instance.withdraw(accounts[0]).then(async (result) => {
+    await instance.withdrawPayments(accounts[0]).then(async (result) => {
       assert.equal(result.receipt.status, true);
     });
   });
@@ -285,50 +270,41 @@ contract('IRoll', async (accounts) => {
   it("custom roll check players balance", async () => {
     await instance.payments.call(accounts[0]).then(async (result) => {
       //console.log(result.toString());
-      assert.equal(result, 831600000000000);
+      assert.equal(result, 5600000000000000);
     });
   });
 
   it("custom roll player withdraws balance", async () => {
-    await instance.withdraw(accounts[0]).then(async (result) => {
+    await instance.withdrawPayments(accounts[0]).then(async (result) => {
       assert.equal(result.receipt.status, true);
     });
   });
 
-  it("get list of all pots", async () => {
-    await instance.getPots.call().then(async (result) => {
-      assert.equal(result.length, 4);
-    });
-  });
-
-  it("change first pot owner", async () => {
+  it("change first pot owner to accounts 1", async () => {
     await instance.setPotOwner(1, accounts[1]).then(async (result) => {
       assert.equal(result.receipt.status, true);
     });
   });
 
   it("update pot current roll", async () => {
-    await instance.setCustomRoll(1, [6,5,4,3,2]).then(async (result) => {
+    await instance.setPotRoll(1, [6, 5, 4, 3, 2]).then(async (result) => {
+      assert.equal(result.receipt.status, true);
+    });
+  });
+
+  it("update pot wallet", async () => {
+    await instance.setPotWallet(1, accounts[1]).then(async (result) => {
       assert.equal(result.receipt.status, true);
     });
   });
 
   it("roll reverts because it exceeds the pot wait interval", async () => {
     await truffleAssert.reverts(instance.roll(1, playerPicks, { from: accounts[0], value: entry }), "wait");
-  }); 
- 
-  it("check pot balance is valid", async () => {
-    await instance.seedPot(1, { from: accounts[0], value: (entry * 4) }).then(async (result) => {
-      assert.equal(result.receipt.status, true);
-      await instance.getPotBalance.call(1).then(async (result) => {
-        assert.equal(result, 8356400000000000);
-      });
-    });
   });
 
   it("tests for one pair", async () => {
-    let onepair = [1,1,2,3,6];
-    await instance.testScore.call(1, onepair,playerPicks).then(async (result) => {
+    let onepair = [1, 1, 2, 3, 6];
+    await instance.testScore.call(1, onepair, playerPicks).then(async (result) => {
       assert.equal(result[0], false);
       assert.equal(result[1], rewards[10]);
     });
@@ -395,5 +371,4 @@ contract('IRoll', async (accounts) => {
       assert.equal(result[1], rewards[0]);
     });
   });
-  */
 });

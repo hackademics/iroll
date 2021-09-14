@@ -10,10 +10,33 @@ const IRollRNG = artifacts.require("./contracts/chainlink/IRollRNG.sol");
 
 module.exports = async (deployer, network, accounts) => {  
   
-    let vrfToken = '0x514910771AF9Ca656af840dff83E8264EcF986CA';
-    let vrfCoordinator = '0xf0d54349aDdcf704F77AE15b96510dEA15cb7952';
-    let vrfKeyHash = '0xAA77729D3466CA35AE8D28B3BBAC7CC36A5031EFDC430821C02BC31A238AF445';
-    let vrfFee = 2;
+  let vrfToken = '0x01BE23585060835E02B77ef475b0Cc51aA1e0709';
+  let vrfCoordinator = '0xb3dCcb4Cf7a26f6cf6B120Cf5A73875B7BBc655B';
+  let vrfKeyHash = '0x2ed0feb3e7fd2022120aa84fab1945545a9f2ffc9076fd6156fa96eaff4c1311';
+  let vrfFee = (0.1 * 10 ** 18);
+
+  let walletRewards = accounts[0];
+  let walletCompany = accounts[1];
+  let walletDeveloper = accounts[2];
+  let walletFounder = accounts[3];
+  let walletFoundation = accounts[4];
+  let walletBurn = accounts[5];
+
+  /// IRoll Token Total Supply
+  let totalSupply = 2000000000 * 10 ** 18;
+
+  /// Initial token distribution of total supply to indvidual wallets
+  let distRewards = 1000000000 * 10 ** 18;
+  let distCompany = 400000000 * 10 ** 18;
+  let distDeveloper = 250000000 * 10 ** 18;
+  let distFounder = 250000000 * 10 ** 18;
+  let distFoundation = 100000000 * 10 ** 18;
+
+  /// vesting epochs based off midnight Sept 10th 2021 origination
+  let yearOne = 1662875999;
+  let yearTwo = 1694411999;
+  let yearThree = 1726034399;
+  let yearFour = 1757570399;
 
   if (network === 'development') {
     await singletons.ERC1820Registry(accounts[0]);
@@ -27,14 +50,14 @@ module.exports = async (deployer, network, accounts) => {
     vrfKeyHash = 0x2ed0feb3e7fd2022120aa84fab1945545a9f2ffc9076fd6156fa96eaff4c1311;
     vrfFee = (0.1 * 10 ** 18);
 
-  } else if (network === 'rinkarby') {
+  } else if (network === 'arbitrumrinkeby') {
     // ARBITRUM 
     vrfToken = 0x01BE23585060835E02B77ef475b0Cc51aA1e0709;
     vrfCoordinator = 0xb3dCcb4Cf7a26f6cf6B120Cf5A73875B7BBc655B;
     vrfKeyHash = 0x2ed0feb3e7fd2022120aa84fab1945545a9f2ffc9076fd6156fa96eaff4c1311;
     vrfFee = (0.1 * 10 ** 18);
 
-  } else if (network === 'arbitrum') {
+  } else if (network === 'arbitrummainnet') {
     // ARBITRUM 
     vrfToken = 0x01BE23585060835E02B77ef475b0Cc51aA1e0709;
     vrfCoordinator = 0xb3dCcb4Cf7a26f6cf6B120Cf5A73875B7BBc655B;
@@ -55,14 +78,14 @@ module.exports = async (deployer, network, accounts) => {
     vrfKeyHash = 0x2ed0feb3e7fd2022120aa84fab1945545a9f2ffc9076fd6156fa96eaff4c1311;
     vrfFee = (0.1 * 10 ** 18);
 
-  } else if (network === 'polygontest'){
+  } else if (network === 'polygonmumbai'){
     // POLYGON TEST VRF
     vrfToken = 0x326C977E6efc84E512bB9C30f76E30c160eD06FB;
     vrfCoordinator = 0x8C7382F9D8f56b33781fE506E897a4F1e2d17255;
     vrfKeyHash = 0x6e75b569a01ef56d18cab6a8e71e6600d6ce853834d4a5748b720d06f878b3a4;
     vrfFee = (0.0001 * 10 ** 18);
 
-  } else if (network === 'polygonmain') {
+  } else if (network === 'polygonmainnet') {
     // POLYGON MAIN VRF
     vrfToken = 0xb0897686c545045aFc77CF20eC7A532E3120E0F1;
     vrfCoordinator = 0x3d2341ADb2D31f1c5530cDC622016af293177AE0;
@@ -85,20 +108,42 @@ module.exports = async (deployer, network, accounts) => {
     vrfFee = (0.2 * 10 ** 18);
   }
   
+  /// Deploy IROLL Token
   await deployer.deploy(IRollToken);
+  
+  /// get an instance of the IRollToken contract
   const token = await IRollToken.deployed();
 
+  /// Deploy Dice.sol libarary
   await deployer.deploy(Dice);
+
+  /// Link Dice lib to IRoll contract
   await deployer.link(Dice, IRoll);
 
+  /// Deploy IRoll contract
+  ///   param IRoll token address
+  ///   param VRF LINK Token address for network
+  ///   param VRF Coordinator address for network
   await deployer.deploy(IRoll, token.address, vrfToken, vrfCoordinator);
+
+  /// Get instance of IRoll contract
   const iroll = await IRoll.deployed();
 
+  /// Deploy IRoll Randomn Number Generator
+  ///   param VRF LINK Token address for network
+  ///   param VRF Coordinator address for network
   await deployer.deploy(IRollRNG, vrfToken, vrfCoordinator);
+  
+  /// Get instance of IRollRNG contract
   const rng = await IRollRNG.deployed();
 
+  /// Set VRF Key Hash for RNG
   rng.setKeyHash(vrfKeyHash);
-  rng.setFee(vrfFee);
+
+  /// Set VRF LINK Fee required for each RNG request
+  rng.setFee(web3.utils.toBN(vrfFee));
+
+  /// Set the caller contract address to IRoll contract address
   rng.setCallerContract(iroll.address);
 
 };

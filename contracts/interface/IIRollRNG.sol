@@ -5,8 +5,8 @@ interface IIRollRNG {
 
     /// @dev VRF lifecycle events
     event VRFInit(address indexed sender, address coordinator, address token);
-    event VRFRequested(address indexed sender, bytes32 indexed vrfId, uint256 indexed puid, uint256 ruid, uint256 started);
-    event VRFFulfilled(address indexed sender, bytes32 indexed vrfId, uint256 indexed puid, uint256 ruid, uint256 finished);
+    event VRFRequested(address indexed sender, bytes32 indexed vrfId, uint256 indexed puid, uint256 started);
+    event VRFFulfilled(address indexed sender, bytes32 indexed vrfId, uint256 indexed puid, uint256 finished);
 
     /// @dev only owner local parameter updates events
     event FeeSet(address indexed sender, uint256 prev, uint256 current);
@@ -14,10 +14,10 @@ interface IIRollRNG {
     event CallerContractSet(address indexed sender, address prev, address current);    
 
     /// @dev initiates request to VRF
-    function request(uint256 _puid, uint256 _ruid) external returns (bytes32);
+    function request(uint256 _puid) external returns (bytes32);
 
     /// @dev call mock request for testing
-    function mockRequest(uint256 _puid, uint256 _ruid) external returns (bytes32);
+    function mockRequest(uint256 _puid) external returns (bytes32);
     
     /// @dev get LINK token
     function getLink() external view returns(address);
