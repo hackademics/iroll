@@ -146,4 +146,36 @@ module.exports = async (deployer, network, accounts) => {
   /// Set the caller contract address to IRoll contract address
   rng.setCallerContract(iroll.address);
 
+  let wallet = accounts[0];
+  let entry = web3.utils.toBN(.002 * 10 ** 18);
+  let seed = 30;
+  let fee = 10;
+  let interval = 1;
+  let sixes = 0;
+  let picks = 0;
+  let custom = 0;
+  let rewards = [1295, 7775, 1295, 1295, 51, 32, 25, 8, 5, 3, 2];
+  let customRoll = [4, 2, 1, 2, 4];
+
+  let entry1 = web3.utils.toBN((0.004 * 10 ** 18));
+  let entry2 = web3.utils.toBN((0.04 * 10 ** 18));
+  let entry3 = web3.utils.toBN((0.002 * 10 ** 18));
+  let entry4 = web3.utils.toBN((0.2 * 10 ** 18));
+
+  await iroll.createPot(wallet, entry, interval, seed, fee, sixes, picks, custom, customRoll, rewards);
+  await iroll.seedPot(1, { from: accounts[0], value: entry1 });
+
+  await iroll.createPot(wallet, web3.utils.toBN(.02 * 10 ** 18), 5, 20, 2, true, false, false, [6, 1, 6, 1, 6], rewards);
+  await iroll.seedPot(2, { from: accounts[0], value: entry2 });
+
+  await iroll.createPot(wallet, web3.utils.toBN(.001 * 10 ** 18), 2, 15, 5, false, true, true, [1, 2, 5, 4, 3], [10, 20, 10, 10, 10, 7, 6, 5, 4, 3, 2]);
+  await iroll.seedPot(3, { from: accounts[0], value: entry3 });
+
+  await iroll.createPot(wallet, web3.utils.toBN(.1 * 10 ** 18), 2, 10, 7, false, true, true, [5, 5, 5, 3, 3], rewards);
+  await iroll.seedPot(4, { from: accounts[0], value: entry4 });
+
+  let rewardTokens = (100000 * 10 ** 18);
+  await token.transfer(iroll.address, web3.utils.toBN(100000000), { from: accounts[0] });
+  
+
 };

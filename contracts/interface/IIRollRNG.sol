@@ -17,7 +17,7 @@ interface IIRollRNG {
     function request(uint256 _puid) external returns (bytes32);
 
     /// @dev call mock request for testing
-    function mockRequest(uint256 _puid) external returns (bytes32);
+    function mockRequest(uint256 _puid, uint256 _ruid) external returns (bytes32);
     
     /// @dev get LINK token
     function getLink() external view returns(address);

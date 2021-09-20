@@ -1,13 +1,78 @@
-html  {border:none; padding:0; margin:0; height:100%; width:100%;background-color:#222222;}
-body  {border:none; padding:0; margin:0; height:100%; width:100%;font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;line-height:1em;}
-table {border:none; border-spacing:0; padding:0; margin:0; height:100%; width:100%;}
+html  {border:none; padding:0; margin:0; height:100%; width:100%;background-color:#1E1E1E;color:#F1F1F1;}
+body  {border:none; padding:0; margin:0; height:100%; width:100%;font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;line-height:1.1em;}
+table {border:none; border-spacing:0; padding:0; margin:0; width:100%;}
 table tbody tr td {border:none;border-spacing:0;height:100%;padding:0;margin:0;vertical-align:top;text-align:left;}
+hr {width:100%;}
+a {color:#B0D9EA;}
 
-#main {width:1000px;margin:0 auto;}
+::-webkit-scrollbar-track {
+  background: #333;
+}
 
-#hud {background-color:green;}
-#hud-player {min-width:200px;background-color:#333333;}
-#hud-pot {min-width:480px;background-color:green;}
-#hud-pots {min-width:200px;background-color:#333333;}
+::-webkit-scrollbar {
+  width: 10px;
+  background: #444; 
+}
 
-.hud-banner{text-align: center;font-size:1.2em;font-weight:bold;background-color:red;padding:5px;}
+::-webkit-scrollbar-thumb:hover {
+  background: #666; 
+}
+
+#root{width:1000px;margin:0 auto;}
+
+header {width:100%;}
+#header {width:100%;min-height:40px;background-color:#13253E;color:#f1f1f1;border-radius:0 0 5px 5px;}
+#header td {vertical-align:middle;padding:10px;}
+#header td:nth-child(2) {width:50%;text-align:center;}
+
+main{width:100%;color:#f1f1f1;}
+#hud {width:100%;display:none;padding:5px;}
+#hud-connect td {width:100%;text-align:center;height:200px;vertical-align:middle;}
+#hud-left {width:25%; max-width:250px;}
+#hud-center {min-width:50%}
+#hud-right {width:25%; max-width:250px;}
+
+footer{display:block;}
+#footer{width:100%;border-radius:5px 5px 0 0;}
+
+table.tbl tr td:nth-child(1) {font-size:14px;padding:4px 0;vertical-align: middle;color:#777}
+table.tbl tr td:nth-child(2) {color:#F1F1F1;}
+
+table.list tr th{font-size:14px;padding:4px 0;vertical-align: middle;background-color:#444;color:#ccc;}
+table.list tr th:nth-child(1){text-align:left;width:200px;text-indent:5px;}
+table.list tr th:nth-child(2){width:200px;text-align:center;}
+table.list tr th:nth-child(3){width:100px;text-align:center;}
+table.list tr th:nth-child(4){width:100px;text-align:right;padding-right:5px;}
+
+table.list tr td{font-size:14px;padding:4px 0;vertical-align: middle;color:#777;}
+table.list tr td:nth-child(1){text-align:left;width:200px;}
+table.list tr td:nth-child(2){width:200px;text-align:center;}
+table.list tr td:nth-child(3){width:100px;text-align:center;}
+table.list tr td:nth-child(4){width:100px;text-align:right;margin-right:5px;}
+
+
+.green-text{color:#659E95}
+
+#pit{background-color:#3B673B;margin:10px 20px 10px 20px;border-radius:5px 5px 5px 5px;}
+#pit table {width:100%;}
+#pit table tr td {width:20%;}
+.pit-circle {text-align:center;border:solid 2px #F2D718;border-radius:50%;margin:10px;height:65px;line-height:65px;color:#F2D718;font-size:1.8em;}
+
+.pit-box{border:solid 2px #F2D718;color:#F2D718;border-radius:5px 5px 5px 5px;margin:10px;padding:10px;text-align:center;}
+.pit-pick-box{width:30px;text-align:center;color:#F2D718;background-color:#417066;border:1px solid #F2D718;font-weight:bold;font-size:1.1em;padding:2px 0;} 
+
+#frmCreatePot tr td {padding:5px 0;}
+
+.pager{margin-top:10px;font-size:.9em;}
+.pager td:nth-child(2) {text-align:center;}
+.pager td:nth-child(3) {text-align:right;}
+
+
+.pot-list-header{background-color:#3B673B;text-align:center;color:#f1f1f1;border-radius:5px 5px 0 0;margin-top:10px;padding:5px 0;}
+.pot-list {padding:5px 10px;background-color:#252526;border-radius:0 0 5px 5px;color:#f1f1f1}
+.pot-list-item td {color:#7777;padding:4px 0}
+.pot-list-item td:nth-child(1) {color:#ccc;font-size:.9em;}
+
+.token-rewards{margin:20px 0;}
+.token-rewards th {background-color:#666;text-align:center;font-size:.9em;margin:0 1px;color:#ccc}
+.token-rewards tr td {text-align:center;font-weight:normal;font-size:.85em;color:#f1f1f1;padding-top:5px;}

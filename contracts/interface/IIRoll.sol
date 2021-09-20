@@ -6,13 +6,13 @@ interface IIRoll {
     /// @dev holds settings for single Pot
     struct Pot {
         bool active; 
-        address owner;
-        address wallet;         
+        bool sixes;
+        bool picks;
+        bool custom; 
         uint8 seed;
-        uint8 fee;
-        uint8 sixes;
-        uint8 picks;
-        uint8 custom; 
+        uint8 fee;                
+        address owner;
+        address wallet;
         uint256 balance;           
         uint256 entry;
         uint256 interval;
@@ -25,8 +25,9 @@ interface IIRoll {
     struct Roll {
         bool jackpot;
         address player;
-        bytes32 UID;
-        uint256 vrfNum;          
+        bytes32 vrfId;
+        uint256 vrfNum; 
+        uint256 UID;                 
         uint256 tokens;
         uint256 payout;
         uint256 fee;
@@ -43,7 +44,7 @@ interface IIRoll {
     function allowed(uint256 _puid) external view returns(bool);
 
     /// @dev create new pot - owner only
-    function createPot(address _wallet, uint256 _entry, uint256 _intrv, uint8 _seed, uint8 _fee, uint8 _sxs, uint8 _pck, uint8 _cstm, uint8[5] calldata _crll, uint256[11] calldata _rwd) external returns(uint256);
+    function createPot(address _wallet, uint256 _entry, uint256 _intrv, uint8 _seed, uint8 _fee, bool _sxs, bool _pck, bool _cstm, uint8[5] calldata _crll, uint256[11] calldata _rwd) external returns(uint256);
 
     /// @dev get pot from pot array, revert if not found or not active
     function getPot(uint256 _puid) external view returns(Pot memory);
@@ -54,11 +55,14 @@ interface IIRoll {
     /// @dev get current pot balance
     function getPotBalance(uint256 _puid) external view returns(uint256); 
 
+    /// @dev get a list of pots
+    function getPots() external view returns(Pot[] memory);
+
     /// @dev get roll by UID
-    function getRoll(bytes32 _ruid) external view returns (Roll memory);
+    function getRoll(uint256 _ruid) external view returns (Roll memory);
 
     /// @dev get all rolls
-    function getRolls() external view returns (Roll[] memory); 
+    function getRolls() external view returns (uint256[] memory); 
 
     /// @dev get all rolls for pot  
     function getPotRolls(uint256 _puid) external view returns (Roll[] memory);  
@@ -82,13 +86,14 @@ interface IIRoll {
     
     
     /// @dev events for the Roll lifecycle
-    event RollInit(address indexed ms, bytes32 indexed ruid, uint256 indexed puid, uint256 pbal, uint256 adrbal);
-    event VRF(address indexed ms, bytes32 indexed ruid, uint256 indexed puid);
-    event Jackpot(address indexed ms, bytes32 indexed ruid, uint256 indexed puid, uint8[5] di, uint8[5] pi, uint256 rwd);
-    event Combo(address indexed ms, bytes32 indexed ruid, uint256 indexed puid, uint8[5] di, uint8[5] pi, uint256 rwd);
-    event Paid(address indexed ms, address indexed owner, bytes32 indexed ruid, uint256 puid, uint256 amt, uint256 sed, uint256 fee, uint256 pbal, uint256 adrbal);    
-    event Reward(address indexed ms, bytes32 indexed ruid, uint256 indexed puid, address tkn, address wlt, uint256 amt);
-    event Fin(address indexed ms, bytes32 indexed ruid, uint256 indexed puid, bool jp, uint256 amt, uint256 sed, uint256 fee, uint8[5] di, uint8[5] pi);
+    event Allow(address ms, uint256 bt, uint256 nr);
+    event RollInit(address indexed ms, bytes32 indexed vrfid, uint256 indexed puid, uint8[5] pi, uint256 pbal, uint256 adrbal);
+    event VRF(address indexed ms, bytes32 indexed vrfid, uint256 indexed puid, uint256 ruid);
+    event Jackpot(address indexed ms, bytes32 indexed vrfid, uint256 indexed puid, uint8[5] di, uint8[5] pi, uint256 rwd);
+    event Combo(address indexed ms, bytes32 indexed vrfid, uint256 indexed puid, uint8[5] di, uint8[5] pi, uint256 rwd);
+    event Paid(address indexed ms, address indexed payee, address indexed owner, uint256 puid, uint256 ruid, uint256 amt, uint256 sed, uint256 fee, uint256 pbal, uint256 adrbal);    
+    event Reward(address indexed ms, bytes32 indexed vrfid, uint256 indexed puid, uint256 ruid, address tkn, address wlt, uint256 amt);
+    event Fin(address indexed ms, bytes32 indexed vrfid, uint256  ruid, uint256 indexed puid, bool jp, uint256 amt, uint256 rwd, uint8[5] di, uint8[5] pi);
     
     // @dev token events
     event TokensSent(address indexed ms, address op, address frm, address to, uint256 amt, bytes usr, bytes opd );

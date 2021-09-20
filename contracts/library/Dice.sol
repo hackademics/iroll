@@ -89,8 +89,12 @@ library Dice {
     /// @dev check if dice result is a Large Straight (32 to 1)    
     function isLargeStraight(uint8[5] memory _d) public pure returns(bool){
         uint8[6] memory m = getMatches(_d);
-        bool result = ((m[0] >= 1) && (m[1] >= 1) && (m[2] >= 1) && (m[3] >= 1) && m[4] == 1 && (m[5] == 0));
-        if(!result){ result = ((m[0] == 0) && (m[1] >= 1) && (m[2] >= 1) && (m[3] >= 1) && m[4] == 1 && (m[5] == 1)); }
+        //12345       
+        bool result = ((m[0] > 0) && (m[1] > 0) && (m[2] > 0) && (m[3] > 0) && (m[4] > 0));
+        if(!result){ 
+             //23456
+            result = ((m[1] > 0) && (m[2] > 0) && (m[3] > 0) && (m[4] > 0) && (m[5] > 0)); 
+        }
         return result;
     }      
 
@@ -106,11 +110,17 @@ library Dice {
     }     
 
     /// @dev check if dice result is a Small Straight (8 to 1)
-    function isSmallStraight(uint8[5] memory _d) public pure returns(bool){
-        uint8[6] memory m = getMatches(_d);
-        bool result = (m[0] >= 1) && (m[1] >= 1) && (m[2] >= 1) && (m[3] >= 1) && (m[4] == 0);
-        if(!result){ result = (m[0] == 0) && (m[1] >= 1) && (m[2] >= 1) && (m[3] >= 1) && ((m[4] >= 1) && (m[5] == 0));
-            if(!result){ result = (m[1] == 0) && (m[2] >= 1) && (m[3] >= 1) && (m[4] >= 1) && (m[5] >= 1); }
+    function isSmallStraight(uint8[5] memory _d) public pure returns(bool){    
+        uint8[6] memory m = getMatches(_d);        
+        //1234
+        bool result = (m[0] > 0) && (m[1] > 0) && (m[2] > 0 ) && (m[3] > 0) && (m[4] == 0);
+        if(!result){
+            //2345
+            result = (m[1] > 0) && (m[2] > 0) && (m[3] > 0) && (m[4] > 0);
+            if(!result){
+                //3456
+                result = (m[2] > 0) && (m[3] > 0) && (m[4] > 0) && (m[5] > 0);
+            }
         }
         return result;
     }   

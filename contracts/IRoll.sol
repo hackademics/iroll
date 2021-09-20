@@ -40,14 +40,16 @@ contract IRoll is IIRoll, Ownable, PullPayment, ReentrancyGuard, Pausable, IERC7
     /// pot unique ids
     Counters.Counter public PUID;
 
+    /// pot unique ids
+    Counters.Counter public RUID;    
+
     /// store thee rollers
-    address payable[] private players; 
+    address payable[] private players;
+
+    mapping(address => uint256) plyrTokensWon;
 
     /// player's VRF Request in flight for pot
-    mapping(address => mapping(uint256 => bytes32)) plyrVrf; 
-
-    /// player's picks
-    mapping(address => mapping(uint256 => uint8[5])) plyrPicks;           
+    mapping(address => mapping(uint256 => bytes32)) plyrVrf;         
 
     /// player's time interval to wait between rolls
     mapping(address => mapping(uint256 => uint256)) nextRoll;     
@@ -58,12 +60,13 @@ contract IRoll is IIRoll, Ownable, PullPayment, ReentrancyGuard, Pausable, IERC7
     
     /// store Rolls 
     Roll[] rolls; 
-    mapping(bytes32 => Roll) mRoll;
+    mapping(uint256 => Roll) mRoll;
+    mapping(address => uint256[]) plyrRolls;
 
     /// IERC777 token sender and recipient set up
-    IERC1820Registry private erc1820 = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
-    bytes32 constant private RECIPIENT_HASH = keccak256("ERC777TokensRecipient");
-    bytes32 constant private SENDER_HASH = keccak256("ERC777TokensSender");    
+    IERC1820Registry internal constant erc1820 = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
+    bytes32 private constant RECIPIENT_HASH = keccak256("ERC777TokensRecipient");
+    bytes32 private constant SENDER_HASH = keccak256("ERC777TokensSender");    
 
     constructor(address _token, address _vrfToken, address _vrfCoord) {         
         /// IRoll token address
@@ -76,14 +79,15 @@ contract IRoll is IIRoll, Ownable, PullPayment, ReentrancyGuard, Pausable, IERC7
         vrfCoord = _vrfCoord;
 
         /// ERC1820 RECIPIENT
-        erc1820.setInterfaceImplementer(address(this), RECIPIENT_HASH, address(this));        
+        erc1820.setInterfaceImplementer(address(this), RECIPIENT_HASH, address(this));    
+        erc1820.setInterfaceImplementer(address(this), SENDER_HASH, address(this));    
     }
 
     /// @dev Roll function
     /// loads pot by id, if pot inactive or 404 then revert
     function roll(uint256 _puid, uint8[5] calldata _pi) public payable override whenNotPaused returns(bytes32){
-        /// will revert if pot doesn't exist or is not active
-        Pot memory p = getPot(_puid);
+        Pot storage p = mPot[_puid];
+        require(p.UID == _puid && p.active, "idactive");
         
         /// check if roll is within pot interal duration        
         require(allowed(p.UID));
@@ -92,70 +96,77 @@ contract IRoll is IIRoll, Ownable, PullPayment, ReentrancyGuard, Pausable, IERC7
         require(p.entry == msg.value, "fee");
 
         /// check pot balance to ensure prize
-        require(p.balance > p.entry.mul(2), "seed");
+        require(p.balance > p.entry, "seed");
 
         /// check picks if player pick enabled
-        if(p.picks == 1 && _pi.validDice() == false){ revert("picks"); }
-
-        /// store player pics for vrf callback
-        plyrPicks[msg.sender][p.UID] = _pi;
+        if(p.picks && _pi.validDice() == false){ revert("picks"); }
 
         /// add entry fee to pot balance
         p.balance = p.balance.add(msg.value);
 
+        /// store player address
         players.push(payable(msg.sender));               
 
         /// set interval for next roll
         nextRoll[msg.sender][p.UID] = block.timestamp.add(p.interval);
 
+        RUID.increment();
+        Roll storage r = mRoll[RUID.current()];
+        r.UID = RUID.current(); 
+        r.PUID = p.UID;
+        r.player = msg.sender;
+        r.picks = _pi;        
+
         /// request random number from VRF
         /// todo REMOVE chain id check before mainnet
-        plyrVrf[msg.sender][p.UID] = new IRollRNG(vrfToken, vrfCoord).mockRequest(p.UID);
+        plyrVrf[msg.sender][p.UID] = new IRollRNG(vrfToken, vrfCoord).mockRequest(p.UID, r.UID);
         //plyrVrf[msg.sender][p.UID] = new IRollRNG(vrfToken, vrfCoord).request(p.UID);       
 
-        emit RollInit(msg.sender, plyrVrf[msg.sender][p.UID], p.UID, p.balance, address(this).balance);
+        emit RollInit(msg.sender, plyrVrf[msg.sender][p.UID], p.UID, r.picks, p.balance, address(this).balance); 
 
-        return (plyrVrf[msg.sender][p.UID]);
+        return (0);
     } 
 
     /// @dev check if roll request satisfies pot interval; 
     function allowed(uint256 _puid) public override view returns(bool){
         if(nextRoll[msg.sender][_puid] == 0){ return true;}
-        if(block.timestamp >= nextRoll[msg.sender][_puid]){ return true; }
+        if(block.timestamp >= nextRoll[msg.sender][_puid]){ return true; }        
         revert("wait");
     }    
 
     /// @dev handle call back 
-    function vrfCallback(bytes32 _reqId, uint256 _rnd, uint256 _puid) external {
-        emit VRF(msg.sender, _reqId, _puid);
-        //require(plyrVrf[msg.sender][_puid] == _reqId);
-
-        plyrVrf[msg.sender][_puid] == _reqId;
+    function vrfCallback(bytes32 _reqId, uint256 _rnd, uint256 _puid, uint256 _ruid) external {
+        emit VRF(msg.sender, _reqId, _puid, _ruid); 
+       
+        Pot storage pot = mPot[_puid];
+        require(pot.UID == _puid && pot.active, "idact");
  
-        Roll storage r = mRoll[_reqId];
-        r.UID = _reqId; 
-        r.PUID = _puid;
-        r.vrfNum = _rnd;
-        r.picks = plyrPicks[msg.sender][_puid];
+        Roll storage r = mRoll[_ruid];
+        require(r.PUID == pot.UID, "pot");
+
         r.dice = _rnd.getDice();
-        
-        /// score 
-        (r.jackpot, r.tokens) = score(r.PUID, r.dice, r.picks);
+        r.vrfNum = _rnd;
+        r.vrfId = _reqId;
+
+        // /// score 
+        (r.jackpot, r.tokens) = score(pot.UID, r.dice, r.picks);
 
         /// pay jackpot winners
-        if(r.jackpot) (r.payout, r.seed, r.fee) = pay(r.PUID);
+        if(r.jackpot) (r.payout, r.seed, r.fee) = pay(pot.UID, r.UID, r.player);
 
-        /// reward tokens
-        if(r.tokens > 0) reward(r.PUID, r.UID, r.tokens);  
+        // /// reward tokens
+        if(r.tokens > 0) reward(r.player, pot.UID, r.UID, r.tokens);  
         
-        rolls.push(r);        
+        rolls.push(r);   
 
-        emit Fin(msg.sender, r.UID, r.PUID, r.jackpot, r.payout, r.seed, r.fee, r.dice, r.picks);       
-    }
+        plyrRolls[r.player].push(r.UID);     
+
+        emit Fin(r.player, r.vrfId, r.UID, r.PUID, r.jackpot, r.payout, r.tokens, r.dice, r.picks);       
+    } 
 
     /// @dev Pay Jackpot winners and pot owner winnings
-    function pay(uint256 _puid) internal nonReentrant whenNotPaused returns(uint256, uint256, uint256){
-        Pot memory p = getPot(_puid);
+    function pay(uint256 _puid, uint256 _ruid, address _payee) internal nonReentrant whenNotPaused returns(uint256, uint256, uint256){
+        Pot storage p = mPot[_puid];
         
         //calculate payout (balance - seedPercent - feePercent)
         uint256 pSeed = p.balance.mul(p.seed).div(100);
@@ -163,7 +174,7 @@ contract IRoll is IIRoll, Ownable, PullPayment, ReentrancyGuard, Pausable, IERC7
         uint256 pPay =  p.balance.sub(pSeed).sub(pFee);
 
         /// pay player
-        _asyncTransfer(msg.sender, pPay);
+        _asyncTransfer(_payee, pPay);
 
         /// pay pot owner
         _asyncTransfer(p.owner, pFee);
@@ -173,16 +184,18 @@ contract IRoll is IIRoll, Ownable, PullPayment, ReentrancyGuard, Pausable, IERC7
         /// check if balance is twice entry fee
         if(p.balance <= p.entry.mul(2)){ emit SeedAlert(msg.sender, p.UID,p.balance, address(this).balance); }
         
-        emit Paid(msg.sender, p.owner, plyrVrf[msg.sender][p.UID], p.UID, pPay, pSeed, pFee, p.balance, address(this).balance);
+        emit Paid(msg.sender, _payee, p.owner, p.UID, _ruid, pPay, pSeed, pFee, p.balance, address(this).balance);  
 
         return (pPay, pSeed, pFee);
     } 
 
     /// @dev Transfer reward tokens to player and pot owner
-    function reward(uint256 _puid, bytes32 _ruid, uint256 _amt) internal nonReentrant whenNotPaused{  
+    function reward(address _payee, uint256 _puid, uint256 _ruid, uint256 _amt) internal nonReentrant whenNotPaused{  
+        Pot storage p = mPot[_puid];
         if(token.balanceOf(address(this)) > _amt){
-            token.send(payable(msg.sender), _amt, abi.encodePacked(_puid, _ruid));        
-            emit Reward(msg.sender, plyrVrf[msg.sender][_puid], _puid, address(token), address(this), _amt); 
+            plyrTokensWon[_payee] = plyrTokensWon[_payee].add(_amt);
+            //token.send(payable(msg.sender), _amt, abi.encodePacked(_puid, _ruid));        
+            emit Reward(msg.sender, plyrVrf[_payee][p.UID], p.UID, _ruid, address(token), address(this), _amt);   
         }
     }   
     
@@ -191,52 +204,52 @@ contract IRoll is IIRoll, Ownable, PullPayment, ReentrancyGuard, Pausable, IERC7
     function score(uint256 _puid, uint8[5] memory _di, uint8[5] memory _pi) internal nonReentrant whenNotPaused returns(bool, uint256){
         require(_di.validDice(), "_di");
         
-        Pot memory p = getPot(_puid);
+        Pot storage p = mPot[_puid];
         
         bool won = false;
         uint256 rwd = 0;        
 
-        if(p.sixes == 1 && _di.isAllSixes()){
+        if(p.sixes && _di.isAllSixes()){
             won = true;
             rwd = p.rewards[1];
-        } else if(p.sixes == 0 && _di.isFiveOfKind()){
+        } else if(!p.sixes && _di.isFiveOfKind()){
             won = true;
             rwd = p.rewards[0];
-        }else if(p.picks == 1 && _di.isMatch(_pi)){
+        }else if(p.picks && _pi.validDice() && _di.isMatch(_pi)){
             won = true;
             rwd = p.rewards[2];
-        } else if(p.custom == 1 && _di.isMatch(p.customRoll)){
+        } else if(p.custom && p.customRoll.validDice() && _di.isMatch(p.customRoll)){
             won = true;
             rwd = p.rewards[3];
         }  
 
         /// @dev exit early if jackpot to skip additional scoring
         if(won){
-            emit Jackpot(msg.sender, plyrVrf[msg.sender][p.UID], _puid, _di, _pi, rwd); 
+            emit Jackpot(msg.sender, plyrVrf[msg.sender][p.UID], p.UID, _di, _pi, rwd); 
             return (won, rwd);
         }   
 
-        /// @dev get token rewards index for non jackpot combinations
+        // /// @dev get token rewards index for non jackpot combinations
          if(_di.isFourOfKind()){ rwd = p.rewards[4]; } 
-         else if(_di.isLargeStraight()){ rwd = p.rewards[5]; } 
-         else if(_di.isFullHouse()){ rwd = p.rewards[6]; }
-         else if(_di.isSmallStraight()){ rwd = p.rewards[7]; } 
-         else if(_di.isThreeOfAKind()){ rwd = p.rewards[8]; } 
-         else if(_di.isTwoPair()){ rwd = p.rewards[9]; } 
-         else if(_di.isSinglePair()){ rwd = p.rewards[10]; }
+        else if(_di.isLargeStraight()){ rwd = p.rewards[5]; }  
+        else if(_di.isFullHouse()){ rwd = p.rewards[6]; }
+        else if(_di.isSmallStraight()){ rwd = p.rewards[7]; } 
+        else if(_di.isThreeOfAKind()){ rwd = p.rewards[8]; } 
+        else if(_di.isTwoPair()){ rwd = p.rewards[9]; } 
+        else if(_di.isSinglePair()){ rwd = p.rewards[10]; }
 
-        /// if reward is gt 0 then emit combo event
-         if(rwd > 0){ emit Combo(msg.sender, plyrVrf[msg.sender][p.UID], _puid, _di, _pi, rwd); }
+        // /// if reward is gt 0 then emit combo event
+        if(rwd > 0){ emit Combo(msg.sender, plyrVrf[msg.sender][p.UID], p.UID, _di, _pi, rwd); }
 
          return (false, rwd);
-    }      
+    }   
 
     /// @dev create a new pot 
-    function createPot(address _wlt, uint256 _ent, uint256 _intrv, uint8 _seed, uint8 _fee, uint8 _sxs, uint8 _pck, uint8 _cstm, uint8[5] calldata _crll, uint256[11] calldata _rwd) 
-    public override onlyOwner nonReentrant returns(uint256) {
-        PUID.increment();
-        Pot storage p = mPot[PUID.current()];
-        
+    function createPot(address _wlt, uint256 _ent, uint256 _intrv, uint8 _seed, uint8 _fee, bool _sxs, bool _pck, bool _cstm, uint8[5] calldata _crll, uint256[11] calldata _rwd) 
+    public override returns(uint256) {
+        PUID.increment(); 
+
+        Pot storage p = mPot[PUID.current()];        
         p.UID = PUID.current();       
         p.wallet = _wlt;
         p.entry = _ent;
@@ -270,7 +283,12 @@ contract IRoll is IIRoll, Ownable, PullPayment, ReentrancyGuard, Pausable, IERC7
     function getPot(uint256 _puid) public override view whenNotPaused returns(Pot memory){
         require(mPot[_puid].UID > 0 && mPot[_puid].active, "404");
         return mPot[_puid];
-    }       
+    } 
+
+    /// @dev get pots
+    function getPots() public override view whenNotPaused returns(Pot[] memory){
+        return pots;
+    }    
 
     /// @dev get current pot balance
     function getPotBalance(uint256 _puid) public override view whenNotPaused returns(uint256){
@@ -279,13 +297,23 @@ contract IRoll is IIRoll, Ownable, PullPayment, ReentrancyGuard, Pausable, IERC7
     }   
 
     /// @dev get roll by UID
-    function getRoll(bytes32 _ruid) public override view whenNotPaused returns (Roll memory){
-        require(mRoll[_ruid].PUID > 0, "404");
+    function getRoll(uint256 _ruid) public override view whenNotPaused returns (Roll memory){
+        require(mRoll[_ruid].PUID > 0, "404"); 
         return mRoll[_ruid]; 
     } 
 
     /// @dev get all rolls
-    function getRolls() public override view whenNotPaused returns (Roll[] memory){ return rolls; }   
+    function getRolls() public override view whenNotPaused returns (uint256[] memory){ 
+        return plyrRolls[msg.sender];    
+    }  
+
+    function getPlayerRollCount() public view returns(uint256){
+        return plyrRolls[msg.sender].length;
+    } 
+
+    function getRollCount() public view returns(uint256){
+        return rolls.length;
+    }     
 
     /// @dev get all rolls for pot
     function getPotRolls(uint256 _puid) public override view whenNotPaused returns (Roll[] memory){     
@@ -366,7 +394,7 @@ contract IRoll is IIRoll, Ownable, PullPayment, ReentrancyGuard, Pausable, IERC7
     /// todo REMOVE
     function testPay(uint256 _id) public onlyOwner returns(uint256, uint256, uint256) {
         plyrVrf[msg.sender][_id] = 0;
-        return pay(_id);
+        return pay(_id, 1, msg.sender);
     }            
 
 

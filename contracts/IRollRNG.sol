@@ -80,18 +80,18 @@ contract IRollRNG is IIRollRNG, VRFConsumerBase, Ownable {
     /// do not REVERT this method
     function fulfillRandomness(bytes32 requestId, uint256 randomness) internal override{
         emit VRFFulfilled(msg.sender, requestId, mPUID[requestId], block.timestamp);
-        IRoll(mCaller[requestId]).vrfCallback(requestId, randomness, mPUID[requestId]);
+        //IRoll(mCaller[requestId]).vrfCallback(requestId, randomness, mPUID[requestId]);
     }  
 
     /// @dev MOCK REQUEST for testing.  REMOVE before MAINNET
     /// todo REMOVE
-    function mockRequest(uint256 _puid) public override onlyOwner returns (bytes32) {         
-        require(_puid > 0, "ids");  
+    function mockRequest(uint256 _puid, uint256 _ruid) public override onlyOwner returns (bytes32) {         
+        require(_puid > 0 && _ruid > 0, "ids");  
 
         bytes32 requestId = keccak256(abi.encodePacked(block.difficulty, block.timestamp));
         uint256 randomness = uint(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
 
-        IRoll(msg.sender).vrfCallback(requestId, randomness, _puid);
+        IRoll(msg.sender).vrfCallback(requestId, randomness, _puid, _ruid);
 
         return requestId;
     }
