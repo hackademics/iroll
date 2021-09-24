@@ -9,9 +9,9 @@ const DApp = {
     contracts: {},
     accounts: [],
     pots: [],
-    potRolls: [],
-    playerRolls: [],
-    currentPoolUID: 0,
+    potIndex: 0,
+    rolls: [],
+    rollIndex: 0,
     initd: false,
 
     //display elements
@@ -81,32 +81,51 @@ const DApp = {
         });
     },
     initHud: async function() {
-        await DApp.fetchPots();
-        //await DApp.fetchPlayerRolls();     
-        await DApp.getRolls();
-        //await DApp.bindPotHistory(1);
+        await DApp.getPots();
+        //console.log(await DApp.getBlockNumber());
+        DApp.getPlayerRolls();
+        DApp.getPlayerEscrow();
+        DApp.getPlayerBalance();
+        DApp.getRewardBalance();
+        //console.log(await DApp.getPlayerEscrow());
+
+
+        // $(".pit-pick-box").keyup(function(){
+        //     if(this.value.length == this.maxLength){
+        //         var $next = $(this).next('.pit-pick-box');
+        //         $(this).next('.pit-pick-box').focus();
+        //         //console.log($next);
+        //         //if($next.length){
+        //             //$(this).next('.pit-pick-box').focus();
+        //         //} else {
+        //             //$(this).blur();
+        //         //}
+        //     }
+        // });
 
         DApp.hud_connect.hide();
         DApp.hud.fadeIn();
         return;     
     },
+    allowed: async function(id) {
+        return await DApp.contracts.IRoll.methods.allowed(1).call({ from: DApp.accounts[0] }).then((result) => {
+            return true;
+        }).catch((err) => {
+            //console.log("err" + err);
+            return false;
+        });
+    },
     roll:  async function(){
-        if (DApp.currentPoolUID <= 0) {
-            return;
-        }    
+        if ($("#pot-uid").text() <= 0) { return; }
 
-        var pot = await DApp.getPot(DApp.currentPoolUID);
-        if (!await DApp.allowed(pot.UID)){
+        var pot = await DApp.getPot($("#pot-uid").text());
+        
+        if (await DApp.allowed(pot.UID) == false){
            $("#pot-status").text("WAIT INTERVAL");
             return;
         }
-
-        const pp1 = $("#pp1").val();
-        const pp2 = $("#pp2").val();
-        const pp3 = $("#pp3").val();
-        const pp4 = $("#pp4").val();
-        const pp5 = $("#pp5").val();
-        let picks = [pp1, pp2, pp3, pp4, pp5];
+        
+        let picks = [$("#pp1").val(), $("#pp2").val(), $("#pp3").val(), $("#pp4").val(), $("#pp5").val()];
 
         for(let i=0;i<5;i++){
             if(picks[i] <= 0 || picks[i] > 6){
@@ -115,191 +134,120 @@ const DApp = {
                 return;
             }
         }
-
-        await DApp.renderRolling();
-
-        $("#pot-status").text("ROLLING..");
-
-        console.log(pot.entry);
+        
+        await DApp.showRolling();
 
         await DApp.contracts.IRoll.methods.roll(pot.UID, picks).send({
             from: DApp.accounts[0],
-            gas: 2344935,
-            value: pot.entry
-        }).on('transactionHash', function (hash) {
-            //$("#pot-status").text("ROLLING..");
-        })
-        .on('receipt', function (receipt) {
-            let rv = receipt.events.Fin.returnValues;
-            for(var i=0;i<rv.di.length;i++){
-                const dnum = rv.di[i];
-                const img = '<img src="../img/d-' + dnum + '.png" style="padding-top:12px;width:40px" />';
-                const sel = "#d" + (i + 1);
-                $(sel).html(img);
-                $(".pit-circle").css("background-color", "#BB4100");
-            }
-            $("#roll-uid").text(rv.ruid);
-            $("#roll-vrfId").text(rv.vrfid.substring(0,15) + "..");
-            $("#roll-puid").text("#" + rv.puid);
-            $("#roll-payout").text(rv.amt + " ETH");
-            $("#roll-tokens").text(rv.rwd + " IROLL");
-
-            let combo = "";
-            switch (rv.rwd){
-                case pot.rewards[10]:
-                    combo = "SINGLE PAIR";
-                    break;
-                case pot.rewards[9]:
-                    combo = "TWO PAIR";
-                    break;
-                case pot.rewards[8]:
-                    combo = "THREE OF A KIND";
-                    break;
-                case pot.rewards[7]:
-                    combo = "SMALL STRAIGHT";
-                    break;
-                case pot.rewards[6]:
-                    combo = "FULL HOUSE";
-                    break;
-                case pot.rewards[5]:
-                    combo = "LARGE STRAIGHT";
-                    break;
-                case pot.rewards[4]:
-                    combo = "FOUR OF A KIND";
-                    break;
-                case pot.rewards[3]:
-                    combo = "CUSTOM ROLL";
-                    break;
-                case pot.rewards[2]:
-                    combo = "PLAYER PICK";
-                    break;
-                case pot.rewards[1]:
-                    combo = "ALL SIXES";
-                    break;
-                case pot.rewards[0]:
-                    combo = "JACKPOT";
-                    break;
-                default:
-                    combo = "BUPKIS";
-                    break;
-            }
-            
-            let d = '';
-            for (var i = 0; i < rv.di.length; i++) {
-                d = d + "<img src='../img/d-" + rv.di[i] + ".png' style='width:15px;background-color:#BB4100;border-radius:5px 5px 5px 5px;margin-right:2px;padding:5px;' />";
-            }
-
-            let p = '';
-            for (var i = 0; i < rv.pi.length; i++) {
-                p = p + "<img src='../img/d-" + rv.pi[i] + ".png' style='width:15px;background-color:#BB4100;border-radius:5px 5px 5px 5px;margin-right:2px;padding:5px;' />";
-            }
-
-            $("#roll-dice").html(d);
-            $("#roll-picks").html(p);
-            $("#roll-combo").text(combo);
-            $("#pot-status").text("DONE: " + combo);            
-
-            DApp.bindPotHistory(pot.UID);
-            $(".fa-th").removeClass("fa-spin");
-            
-        })
-        .on('confirmation', function (confirmatnNumber, receipt) {
-            //console.log(receipt);
-        })
-        .on('error', function (error, receipt) {
-            if (error.message.includes("revert wait")){
-                $("#pot-status").text("WAIT INTERVAL");
-            } else {
-                $("#pot-status").text("FAILED");
-            }
-
-            $(".fa-th").removeClass("fa-spin");
-        });
-
-       
+            gas: 1232731,
+            value: pot.entry})       
+            .on('receipt', function (receipt) {
+                $(".fa-th").removeClass("fa-spin");
+                let rv = receipt.events.Rolls.returnValues;
+                DApp.bindRoll(rv);                
+                //DApp.getPotRolls(pot.UID);
+                
+            })
+            .on('error', function (error, receipt) {
+                if (error.message.includes("revert wait")){
+                    $("#pot-status").text("WAIT INTERVAL");
+                } else {
+                    $("#pot-status").text("FAILED");
+                }
+                $(".fa-th").removeClass("fa-spin");
+            });       
 
         return;
         
     },
-    bindPotHistory: async function(_puid){
-        let options = {
-            filter:{puid:[_puid]},
-            fromBlock: 0,
-            toBlock: 'latest'
-        };
-        DApp.contracts.IRoll.getPastEvents('Fin', options)
-            .then((results) => {
-                results.reverse();
-
-                let table = document.createElement("table");
-                table.className = "list";
-
-                let tblHead = document.createElement("thead");
-                table.append(tblHead);
-
-                let trh = document.createElement('tr');
-                tblHead.appendChild(trh);
-
-                let th = document.createElement("th");
-                trh.appendChild(th);
-                th.appendChild(document.createTextNode("PLAYER"));
-
-                th = document.createElement("th");
-                trh.appendChild(th);
-                th.appendChild(document.createTextNode("DICE"));
-
-                th = document.createElement("th");
-                trh.appendChild(th);
-                th.appendChild(document.createTextNode("IROLL"));
-
-                th = document.createElement("th");
-                trh.appendChild(th);
-                th.appendChild(document.createTextNode("ETH"));
-
-                let tblBody = document.createElement("tbody");
-                table.append(tblBody);
-                
-                for(let i=0;i<results.length;i++){
-                    let tr = document.createElement('tr');
-                    tblBody.appendChild(tr);
-
-                    let td = document.createElement("td");
-                    tr.appendChild(td);
-                    td.appendChild(document.createTextNode(results[i].returnValues.ms.substring(0,18) + ".."));
-                   
-                    td = document.createElement("td");
-                    tr.appendChild(td);
-                    td.appendChild(document.createTextNode(results[i].returnValues.di));
-
-                    td = document.createElement("td");
-                    tr.appendChild(td);
-                    td.appendChild(document.createTextNode(results[i].returnValues.rwd));
-
-                    td = document.createElement("td");
-                    tr.appendChild(td);
-                    td.appendChild(document.createTextNode(results[i].returnValues.amt));
-                }
-
-                $("#pot-history").html(table);
-
-            })
-            .catch((err) => {
-                console.log(err);
-            });
-    },
-    allowed: async function(id){
-        // DApp.contracts.IRoll.methods.allowed(id).call({ from: DApp.accounts[0] }).then((result) => {
-        //     console.log("res" + result);
-        //     return true;
-        // }).catch((err) => {
-        //     console.log("err" + err);
-        //     return false;
-        // });
-        return true;
-    },
     getPot: async function (id) {
-       return await DApp.contracts.IRoll.methods.getPot(id).call({ from: DApp.accounts[0] });
+        return await DApp.contracts.IRoll.methods.getPot(id).call({ from: DApp.accounts[0] });
     },
+    getPots: async function () {
+        DApp.pots = await DApp.contracts.IRoll.methods.getPots().call({ from: DApp.accounts[0] });
+        DApp.bindPot(DApp.pots[0]);
+    },
+    pagePots: async function (ele) {
+        ele.toString().includes('forward') ? DApp.potIndex-- : DApp.potIndex++;
+        if(DApp.potIndex >= DApp.pots.length) DApp.potIndex = 0;
+        if(DApp.potIndex < 0) DApp.potIndex = DApp.pots.length - 1;
+        return DApp.bindPot(DApp.pots[DApp.potIndex]);
+    },
+    getPotRolls: async function (_puid) {
+        let options = { filter: { puid: [_puid] }, fromBlock: 0, toBlock: 'latest' };
+        await DApp.contracts.IRoll.getPastEvents('Rolls', options).then((results) => {
+            if (results) { results.reverse(); }
+            return DApp.bindPotRolls(results);
+        }).catch((err) => {
+            return [];
+        });
+    }, 
+    selectPot: async function () {
+        if($("#pot-uid").text() <= 0) {return;}
+        $("#pit-pot-balance").html("LOADING...");
+        $("#pit-customroll").html("&nbsp;");
+        $("#btn-roll").html("");
+        $("#hud-center").css("opacity", "50%");
+        setTimeout(() => {
+            return DApp.getPot($("#pot-uid").text()).then((result) => {
+                return DApp.bindPotPit(result);
+            })
+        }, 500);
+        return ;
+    },
+    getPlayerRolls: async function(){
+        let options = { filter: { plyr: [DApp.accounts[0]] }, fromBlock: 0, toBlock: 'latest' };
+        return await DApp.contracts.IRoll.getPastEvents('Rolls', options).then((results) => {
+            if (results) { results.reverse(); }  
+            DApp.rolls = results;  
+            $("#player-rolls").text(results.length);              
+            return DApp.bindRoll(DApp.rolls[0].returnValues);
+        }).catch((err) => {
+            //alert(err);
+        });
+    },
+    pageRolls: async function (ele) {
+        ele.toString().includes('forward') ? DApp.rollIndex++ : DApp.rollIndex--;
+        if (DApp.rollIndex >= DApp.rolls.length) DApp.rollIndex = 0;
+        if (DApp.rollIndex < 0) DApp.rollIndex = DApp.rolls.length - 1;
+        return DApp.bindPot(DApp.rolls[DApp.rollIndex]);
+    },
+    getPlayerEscrow: async function () {
+        await DApp.contracts.IRoll.methods.payments(DApp.accounts[0]).call().then((result) => {
+            var balance = DApp.web3.utils.fromWei(result, 'ether');
+            var val = (balance).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            $("#player-escrow").text(val);
+        }).catch((err) => {
+            return 0;
+        });
+    },
+    getPlayerBalance: async function () {
+        await DApp.contracts.IRoll.methods.getPlayerBalance().call().then((result) => {
+            var balance = DApp.web3.utils.fromWei(result, 'ether');
+            var val = (balance).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            $("#player-balance").text(val);
+        }).catch((err) => {
+            return 0;
+        });
+    },    
+    getRewardBalance: async function () {
+        await DApp.contracts.IRoll.methods.getRewardBalance().call().then((result) => {
+            var balance = DApp.web3.utils.fromWei(result, 'ether');
+            var val = (balance).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            $("#reward-balance").text(val);
+        }).catch((err) => {
+            //console.log("err" + err);
+            return false;
+        });
+    },
+    getBlockNumber: async function(){
+        return DApp.web3.eth.getBlockNumber().then((result) => {
+            return result;
+        }).catch((err) => {
+            //console.log(err);
+        });
+    },
+
     seedPot: async function(){   
         let uid = $("#pot-uid").text();
         if(uid <= 0){
@@ -311,155 +259,19 @@ const DApp = {
             gas: 1333473,
             value: DApp.web3.utils.toBN(.01 * 10 ** 18)
         })
-        .on('transactionHash', function(hash){
-            //console.log(hash);
-        })
         .on('receipt', function (receipt) {
             //console.log(receipt);
-            DApp.bindPot(uid - 1);
-        })
-        .on('confirmation', function (confirmatnNumber, receipt) {
-            //console.log(receipt);
+            DApp.bindPot(uid);
         })
         .on('error', function (error, receipt) {
-            //console.log(error);
+            console.log(error);
             //console.log(receipt);
         });
         
     },
-    loadPool: async function(id){
-        const pool = await DApp.getPot(id);
-
-        let d = '';
-        for (var i = 0; i < pool.customRoll.length; i++) {
-            d = d + "<img src='../img/d-" + pool.customRoll[i] + ".png' style='width:20px;background-color:#BB4100;border-radius:5px 5px 5px 5px;margin-right:5px;padding:5px;' />";
-        }
-
-        $("#pit-customroll").html(d);
-
-        $("#pit-pot-balance").text(DApp.web3.utils.fromWei(pool.balance, "ether") + " ETH  # " + pool.UID);
-        $("#btn-roll").text(DApp.web3.utils.fromWei(pool.entry, "ether") + " ETH BUY IN");
-        $("#pit-pot-noentry").hide();
-        $("#pot-status").text("AWAITING BUY IN");
-
-        alert("POT # " + id + " HAS BEEN SELECTED");
-
-        await DApp.bindPotHistory(id)
-
-    },
-    bindPot: async function(index){
-        
-        let id = DApp.pots[index].UID;
-        const pot = await DApp.getPot(id);
-        
-        let d = '';
-        for(var i=0;i<pot.customRoll.length;i++){
-            d = d + "<img src='../img/d-" + pot.customRoll[i] + ".png' style='width:15px;background-color:#BB4100;border-radius:5px 5px 5px 5px;margin-right:2px;padding:5px;' />";
-        }
-        
-        $("#pot-uid").text(pot.UID);
-        $("#pot-balance").text(DApp.web3.utils.fromWei(pot.balance, 'ether'));
-        $("#pot-tokens").text(pot.rewards[0]);
-        $("#pot-entry").text(DApp.web3.utils.fromWei(pot.entry, 'ether'));
-        $("#pot-seed").text(pot.seed);
-        $("#pot-interval").text(pot.interval + " SECONDS");
-        $("#pot-owner").text(pot.owner.substring(0,10) + "...");
-        $("#pot-sixes").text(pot.sixes ? "YES" : "NO");
-        $("#pot-picks").text(pot.picks ? "YES" : "NO");
-        $("#pot-custom").text(pot.custom ? "YES" : "NO");
-        $("#pot-customroll").html(d);
-        $("#pot-rwd4").text(pot.rewards[4]);
-        $("#pot-rwd5").text(pot.rewards[5]);
-        $("#pot-rwd6").text(pot.rewards[6]);
-        $("#pot-rwd7").text(pot.rewards[7]);
-        $("#pot-rwd8").text(pot.rewards[8]);
-        $("#pot-rwd9").text(pot.rewards[9]);
-        $("#pot-rwd10").text(pot.rewards[10]);
-
-        return;
-    },
-    bindPlayerPot: async function(roll) {
-        $("#roll-uid").text(roll.UID);
-        $("#pot-payout").text(DApp.web3.utils.fromWei(roll.payout, 'ether'));
-    },
-    fetchPlayerRolls: async function () {
-        const rolls = await DApp.contracts.IRoll.methods.getRolls().call({ from: DApp.accounts[0] });
-        console.log(rolls);
-        // if(DApp.playerRolls.length > 0){
-        //     DApp.bindPlayerRoll(DApp.playerRolls[0]);
-        //     $("#player-rolls").show();
-        //     $("#player-rolls-pager").show();
-        //     $("#no-rolls").hide();
-        // } else {
-        //     $("#player-rolls").hide();
-        //     $("#player-rolls-pager").hide();
-        // } 
-        return;       
-    },
-    getRolls: async function () {
-        //const t = await DApp.contracts.IRoll.methods.getRolls().call({ from: DApp.accounts[0] });
-        //console.log(t);
-        return;
-
-    },
-    getRoll: async function () {
-        const rolls = await DApp.contracts.IRoll.methods.getRoll(1).call({ from: DApp.accounts[0] });
-        console.log(rolls);
-        return;
-
-    },
-    fetchPotRolls: async function () {
-
-    },
-    fetchPots: async function () {
-        DApp.pots = await DApp.contracts.IRoll.methods.getPots().call({ from: DApp.accounts[0] });
-        //console.log(DApp.pots[0]);
-        return DApp.bindPot(0);
-    },
-    previousPot: async function(){
-        let index = $("#pot-uid").text() - 1;
-        index = (index <= 0) ? DApp.pots.length - 1 : index - 1;
-        return DApp.bindPot(index);
-        
-    },
-    nextPot: async function() {
-        let index = $("#pot-uid").text() - 1;
-        index = (index >= DApp.pots.length - 1) ? 0 : index + 1;
-        return DApp.bindPot(index);
-    },
-    selectPot: async function () {
-        DApp.currentPoolUID = $("#pot-uid").text();
-        //$("#pool-uid").val(uid);
-        //console.log(DApp.currentPoolUID);
-        DApp.loadPool(DApp.currentPoolUID);
-        
-    },
-    previousRoll: async function () {
-        //let index = $("#roll-uid").text() - 1;
-        //index = (index < 0) ? DApp.pots.length - 1 : index - 1;
-        //DApp.bindPot(DApp.pots[index]);
-
-    },
-    nextRoll: async function () {
-        //let index = $("#roll-uid").text() - 1;
-        //index = (index >= DApp.pots.length) ? 0 : index + 1;
-        //DApp.bindPot(DApp.pots[index]);
-    },
-    selectRoll: async function () {
-        $("#roll-uid").text();
-    },
-    renderRolling: async function(){
-        $("#d1").text("?");
-        $("#d2").text("?");
-        $("#d3").text("?");
-        $("#d4").text("?");
-        $("#d5").text("?");
-        $(".pit-circle").css("background-color", "#3B673B");
-        $(".fa-th").addClass("fa-spin");
-    },
     createPot: async function () {
         let wallet = $("#txtWallet").val();
-        let entry = DApp.web3.utils.toBN($("#txtEntryFee").val() * 10 ** 18);//;
+        let entry = DApp.web3.utils.toBN($("#txtEntryFee").val() * 10 ** 18);
         let interval = DApp.web3.utils.toBN($("#txtInterval").val());
         let seed = $("#txtSeed").val();
         let fee = $("#txtFee").val();
@@ -469,32 +281,156 @@ const DApp = {
         let customRoll = [$("#cr0").val(), $("#cr1").val(), $("#cr2").val(), $("#cr3").val(), $("#cr4").val()];
         let rewards = [$("#rwd0").val(), $("#rwd1").val(), $("#rwd2").val(), $("#rwd3").val(), $("#rwd4").val(), $("#rwd5").val(), $("#rwd6").val(), $("#rwd7").val(), $("#rwd8").val(), $("#rwd9").val(), $("#rwd10").val()];
         
-        try{
-            // await DApp.contracts.IRoll.methods.createPot(
-            //     wallet,
-            //     entry,
-            //     interval,
-            //     seed,
-            //     fee,
-            //     sixes,
-            //     picks,
-            //     custom,
-            //     customRoll,
-            //     rewards)
-            //     .send(function(error, result){
-            //         console.log(result);
-            //         //console.log(error);
-            //     });
-            //DApp.contracts.IRoll.methods.mockPot().send({ from: DApp.accounts[0] }, function (receipt) {
-                //console.log(receipt);
-            //});
-            
-            
-        }catch(error){
-            //console.log(error);
-            return false;
-        }
         return true;
+    },
+    bindResultDice: function (arr) {
+        for (var i = 0; i < arr.length; i++) {
+            const dnum = arr[i];
+            const img = '<img src="../img/d-' + dnum + '.png" style="padding-top:12px;width:40px" />';
+            const sel = "#d" + (i + 1);
+            $(sel).html(img);
+            $(".pit-circle").css("background-color", "#BB4100");
+        }
+    },
+    bindRoll: function (rv) {
+        if(rv.puid <= 0){return;}
+
+        DApp.getPot(rv.puid).then((result) => {
+            let combo = DApp.getCombo(rv.rwd, result.rewards);
+            $("#roll-combo").text(combo);
+        });
+        let d = DApp.toDice(rv.di, 16);
+        let p = DApp.toDice(rv.pi, 12);
+
+        $("#roll-vrfId").text(rv.vrfid.substring(0, 15) + "..");
+        $("#roll-puid").text(rv.puid);
+        $("#roll-payout").html(DApp.web3.utils.fromWei(rv.amt, 'ether') + " <small>ETH</small>");
+        $("#roll-tokens").html(DApp.web3.utils.fromWei(rv.rwd, 'ether') + " <small>IROLL</small>");
+        $("#roll-dice").html(d);
+        $("#roll-picks").html(p);
+
+        return;
+    },
+    bindPot: async function (id) {
+
+        const pot = await DApp.getPot(id);
+
+        let d = DApp.toDice(pot.customRoll, 15);
+
+        $("#pot-uid").text(pot.UID);
+        $("#pot-balance").text(DApp.web3.utils.fromWei(pot.balance, 'ether'));
+        $("#pot-entry").text(DApp.web3.utils.fromWei(pot.entry, 'ether'));
+        $("#pot-seed").text(pot.seed);
+        $("#pot-interval").html(pot.interval + " <small>SECONDS</small>");
+        $("#pot-owner").text(pot.owner.substring(0, 14) + "..");
+        $("#pot-sixes").text(pot.sixes ? "REQUIRED" : "NOT REQUIRED");
+        $("#pot-picks").text(pot.picks ? "WINS JACKPOT" : "NO JACKPOT");
+        $("#pot-custom").text(pot.custom ? "WINS JACKPOT" : "NO JACKPOT");
+        $("#pot-customroll").html(d);
+        $("#pot-rwd0").text(DApp.web3.utils.fromWei(pot.rewards[0], 'ether'));
+        $("#pot-rwd1").text(DApp.web3.utils.fromWei(pot.rewards[1], 'ether'));
+        $("#pot-rwd2").text(DApp.web3.utils.fromWei(pot.rewards[2], 'ether'));
+        $("#pot-rwd3").text(DApp.web3.utils.fromWei(pot.rewards[3], 'ether'));
+        $("#pot-rwd4").text(DApp.web3.utils.fromWei(pot.rewards[4], 'ether'));
+        $("#pot-rwd5").text(DApp.web3.utils.fromWei(pot.rewards[5], 'ether'));
+        $("#pot-rwd6").text(DApp.web3.utils.fromWei(pot.rewards[6], 'ether'));
+        $("#pot-rwd7").text(DApp.web3.utils.fromWei(pot.rewards[7], 'ether'));
+        $("#pot-rwd8").text(DApp.web3.utils.fromWei(pot.rewards[8], 'ether'));
+        $("#pot-rwd9").text(DApp.web3.utils.fromWei(pot.rewards[9], 'ether'));
+        $("#pot-rwd10").text(DApp.web3.utils.fromWei(pot.rewards[10], 'ether'));
+
+        return;
+    },
+    bindPotPit: async function (pot) {
+        $("#hud-center").css("opacity", "100%");
+        $("#pit").css("background-color", "#3B673B");
+        let d = DApp.toDice(pot.customRoll, 20);
+        $("#pit-customroll").html(d);
+
+        $("#pit-pot-balance").html(DApp.web3.utils.fromWei(pot.balance, "ether") + " ETH <br /><br /> POT # " + pot.UID);
+        $("#btn-roll").html(DApp.web3.utils.fromWei(pot.entry, "ether") + " ETH<br /><br /> ROLL DICE");
+        $("#pit-pot-noentry").hide();
+        $("#pot-status").text("WAITING FOR BUY IN");
+
+        await DApp.getPotRolls(pot.UID);
+
+        return;
+
+    },
+    bindPotRolls: function(results) {
+
+        let table = document.createElement("table");
+        table.className = "list";
+
+        let tblHead = document.createElement("thead");
+        table.append(tblHead);
+
+        let trh = document.createElement('tr');
+        tblHead.appendChild(trh);
+
+        let th = document.createElement("th");
+        trh.appendChild(th);
+        th.appendChild(document.createTextNode("PLAYER"));
+
+        th = document.createElement("th");
+        trh.appendChild(th);
+        th.appendChild(document.createTextNode("DICE"));
+
+        th = document.createElement("th");
+        trh.appendChild(th);
+        th.appendChild(document.createTextNode("IROLL"));
+
+        th = document.createElement("th");
+        trh.appendChild(th);
+        th.appendChild(document.createTextNode("ETH"));
+
+        let tblBody = document.createElement("tbody");
+        table.append(tblBody);
+
+        for (let i = 0; i < results.length; i++) {
+            let tr = document.createElement('tr');
+            tblBody.appendChild(tr);
+
+            let td = document.createElement("td");
+            tr.appendChild(td);
+            td.appendChild(document.createTextNode(results[i].returnValues.plyr.substring(0, 18) + ".."));
+
+            let dice = DApp.toDice(results[i].returnValues.di, 13);
+            let div = document.createElement("div");
+            div.innerHTML = dice;
+            td = document.createElement("td");
+            tr.appendChild(td);
+            td.appendChild(div);
+
+            td = document.createElement("td");
+            tr.appendChild(td);
+            td.appendChild(document.createTextNode(DApp.web3.utils.fromWei(results[i].returnValues.rwd, 'ether')));
+
+            td = document.createElement("td");
+            tr.appendChild(td);
+            td.appendChild(document.createTextNode(results[i].returnValues.amt));
+        }
+
+        console.log(table);
+
+        $("#pot-history").html(table);
+
+        return;
+    },
+    showRolling: async function () {
+        $("#pot-status").text("ROLLING..");
+        $("#d1").text("?");
+        $("#d2").text("?");
+        $("#d3").text("?");
+        $("#d4").text("?");
+        $("#d5").text("?");
+        $(".pit-circle").css("background-color", "#3B673B");
+        $(".fa-th").addClass("fa-spin");
+    },
+    showRollComplete: async function () {
+        $("#pot-status").text("ROLLING..");
+        $(".pit-circle").css("background-color", "#3B673B");
+        $(".fa-th").addClass("fa-spin");
     },
     mapNum: function(num){
         switch(num){
@@ -512,6 +448,41 @@ const DApp = {
                 return "six";
         }
         return;
+    },
+    toDice: function(arr, w){
+        let d = '';
+        for (var i = 0; i < arr.length; i++) {
+            d = d + "<img src='../img/d-" + arr[i] + ".png' style='width:" + w + "px;background-color:#BB4100;border-radius:5px 5px 5px 5px;margin-right:2px;padding:5px;' />";
+        }
+        return d;
+    },
+    getCombo: function(rwd, rwds){
+        switch (rwd) {
+            case rwds[10]:
+                return "SINGLE PAIR";
+            case rwds[9]:
+                return "TWO PAIR";
+            case rwds[8]:
+                return "THREE OF A KIND";
+            case rwds[7]:
+                return "SMALL STRAIGHT";
+            case rwds[6]:
+                return "FULL HOUSE";
+            case rwds[5]:
+                return "LARGE STRAIGHT";
+            case rwds[4]:
+                return "FOUR OF A KIND";
+            case rwds[3]:
+                return "CUSTOM ROLL";
+            case rwds[2]:
+                return "PLAYER PICK";
+            case rwds[1]:
+                return "ALL SIXES";
+            case rwds[0]:
+                return "JACKPOT";
+            default:
+                return "BUPKIS";
+        }
     }
 };
 

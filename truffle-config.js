@@ -104,7 +104,11 @@ module.exports = {
     },*/
   },
   etherscan:{ apiKey: etherscanApi },
-  mocha: { timeout: 100000 },
+  mocha: { 
+    timeout: 100000,
+    reporter: 'eth-gas-reporter',
+    reporterOptions: {currency: 'USD'},
+  },
   compilers: {
     solc: {
        version: "0.8.7",
@@ -112,7 +116,7 @@ module.exports = {
        settings: {
         optimizer: {
           enabled: true,
-          runs: 200
+          runs: 1100
         },
         metadata: { bytecodeHash: 'none' },
         evmVersion: "constantinople"

@@ -10,9 +10,9 @@
     <header>
         <table id="header">
             <tr>
-                <td style="text-align:right;width:25%;">&nbsp;</td>
+                <td style="text-align:left;width:25%;">IROLL REWARDS: <span id="reward-balance">...</span></td>
                 <td>IROLL.IO</td>
-                <td style="text-align:right;width:25%;"><input type="text" id="puid" style="width:60px;text-align: center;background-color:#333;color:#FFF;padding:2px 0;border:none;" /></td>
+                <td style="text-align:right;width:25%;">POT # &nbsp;<input type="text" id="puid" style="width:60px;text-align: center;background-color:#333;color:#FFF;padding:2px 0;border:none;" /></td>
             </tr>
         </table>
     </header>
@@ -25,59 +25,52 @@
                         <table class="tbl">
                             <tr>
                                 <td>ESCROW</td>
-                                <td><a href="javascript:void(0);" title="Cash Out Winnings">.015680 ETH</a></td>
+                                <td><a href="javascript:void(0);" title="Cash Out Winnings"><span id="player-escrow"></span> ETH</a></td>
                             </tr>
                             <tr>
-                                <td>IROLL WON</td>
-                                <td>25</td>
+                                <td>BALANCE</td>
+                                <td><span id="player-balance">...</span></td>
+                            </tr>
+                            <tr>
+                                <td>ROLLS</td>
+                                <td><span id="player-rolls">...</span></td>
                             </tr>
                         </table>
-                    </div>
-                    <div class="pot-list-header" style="background-color:#3E2A65;">ROLL RECEIPT</div>
-                    <div class="pot-list">
-                        <table class="pot-list-item tbl" id="player-rolls">
-                            <tr>
-                                <td>COMBO</td>
-                                <td><span id="roll-combo"></span></td>
-                            </tr>
-                            <tr>
-                                <td>DICE</td>
-                                <td><span id="roll-dice"></span></td>
-                            </tr>
-                            <tr>
-                                <td>PICKS</td>
-                                <td><span id="roll-picks"></span></td>
-                            </tr>
-                            <tr>
-                                <td>ROLL ID</td>
-                                <td><span id="roll-uid"></span></td>
-                            </tr>
-                            <tr>
-                                <td>POT ID</td>
-                                <td><span id="roll-puid"></span></td>
-                            </tr>
-                            <tr>
-                                <td>PAYOUT</td>
-                                <td><span id="roll-payout"></span></td>
-                            </tr>
-                            <tr>
-                                <td>TOKENS</td>
-                                <td><span id="roll-tokens"></span></td>
-                            </tr>
-                            <tr>
-                                <td>VRF ID</td>
-                                <td><a href=""><span id="roll-vrfId"></span></a></td>
-                            </tr>
-                        </table>
-                        <!-- <br />
-                        <div id="player-rolls-pager">
-                            <table class="pager">
+                        <div class="pot-list-header" style="background-color:#444;">ROLLS
+                        <a href="javascript:void(0)" onclick="DApp.previousRoll()" style="float:left;margin-left:10px;"><i class="fas fa-backward"></i></a>
+                        <a href="javascript:void(0)" onclick="DApp.nextRoll()" style="float:right;margin-right:10px;"><i class="fas fa-forward"></i></a>
+                        </div>                    
+                        <div class="pot-list">
+                            <table class="pot-list-item tbl" id="player-rolls">
                                 <tr>
-                                    <td><a href="javascript:void(0)" onclick="DApp.previousRoll()"><i class="fas fa-backward"></i></td>
-                                    <td>&nbsp;</td>
-                                    <td><a href="javascript:void(0)" onclick="DApp.nextRoll()"><i class="fas fa-forward"></i></a></td>
+                                    <td>COMBO</td>
+                                    <td><span id="roll-combo"></span></td>
                                 </tr>
-                            </table> -->
+                                <tr>
+                                    <td>DICE</td>
+                                    <td><span id="roll-dice"></span></td>
+                                </tr>
+                                <tr>
+                                    <td>PICKS</td>
+                                    <td><span id="roll-picks"></span></td>
+                                </tr>
+                                <tr>
+                                    <td>POT #</td>
+                                    <td><span id="roll-puid"></span></td>
+                                </tr>
+                                <tr>
+                                    <td>PAYOUT</td>
+                                    <td><span id="roll-payout"></span></td>
+                                </tr>
+                                <tr>
+                                    <td>TOKENS</td>
+                                    <td><span id="roll-tokens"></span></td>
+                                </tr>
+                                <tr>
+                                    <td>VRF ID</td>
+                                    <td><a href=""><span id="roll-vrfId"></span></a></td>
+                                </tr>
+                            </table>                      
                         </div>
                 </div>
 
@@ -88,15 +81,12 @@
                             <tr>
                                 <td>
                                     <div class="pit-box">
-                                        <input type="hidden" id="pool-uid" />
-                                        <span id="pit-pot-balance">SELECT POT</span>
-                                        <i class="fas fa-sync-alt" style="float:left;"></i>
+                                        <span style="font-size:1.5em;" id="pit-pot-balance">SELECT POT</span>
                                     </div>
                                 </td>
                                 <td>
                                     <div class="pit-box">
-                                        <span id="pit-pot-entry"><a href="javascript:void(0)" onclick="DApp.roll()" style="color:#F2D718" id="btn-roll"></a></span><span id="pit-pot-noentry">NO ENTRY</span>
-                                        <i class="fas fa-hand-pointer" style="float:right;"></i>
+                                        <span style="font-size:1.5em;" id="pit-pot-entry"><a href="javascript:void(0)" onclick="DApp.roll()" style="color:#F2D718" id="btn-roll"></a>&nbsp;</span>
                                     </div>
                                 </td>
                             </tr>
@@ -132,11 +122,11 @@
                                     <div class="pit-box" id="pit-picks">
                                         <table>
                                             <tr>
-                                                <td><input type="text" id="pp1" maxlength="1" value="0" class="pit-pick-box" /></td>
-                                                <td><input type="text" id="pp2" maxlength="1" value="0" class="pit-pick-box" /></td>
-                                                <td><input type="text" id="pp3" maxlength="1" value="0" class="pit-pick-box" /></td>
-                                                <td><input type="text" id="pp4" maxlength="1" value="0" class="pit-pick-box" /></td>
-                                                <td><input type="text" id="pp5" maxlength="1" value="0" class="pit-pick-box" /></td>
+                                                <td><input type="text" id="pp1" maxlength="1" value="6" class="pit-pick-box" /></td>
+                                                <td><input type="text" id="pp2" maxlength="1" value="6" class="pit-pick-box" /></td>
+                                                <td><input type="text" id="pp3" maxlength="1" value="6" class="pit-pick-box" /></td>
+                                                <td><input type="text" id="pp4" maxlength="1" value="6" class="pit-pick-box" /></td>
+                                                <td><input type="text" id="pp5" maxlength="1" value="6" class="pit-pick-box" /></td>
                                             </tr>
                                         </table>
                                         <div style="margin-top:15px;"><i class="fas fa-dice"></i> &nbsp; &nbsp; PICK'EM &nbsp; &nbsp; <i class="fas fa-dice"></i></div>
@@ -156,6 +146,7 @@
                                     <div class="pit-box" id="pit-picks">
                                         <div><i class="fas fa-th"></i> &nbsp; &nbsp; ROLL STATUS &nbsp; &nbsp; <i class="fas fa-th"></i>
                                         <div id="pot-status" style="margin-top:23px;">NO POT SELECTED</div>
+                                        <img src="img/mine.gif" height="35" id="mining" style="display:none;" />
                                         </div>
                                     </div>
                                 </td>
@@ -163,28 +154,33 @@
                         </table>
                     </div>
                     <div style="margin:0 20px">
-                        <div class="pot-list-header" style="background-color:#3B673B">POT ROLL HISTORY<span></span> </div>
+                        <div class="pot-list-header" style="background-color:#3B673B">POT ROLLS<span></span> </div>
                         <div class="pot-list" style="height:210px;overflow:auto;">
                         <div id="pot-history">
+                            > select pot
                         </div>
                     </div>
                     </div>
                 </td>
                 <td id="hud-right">   
-                    <div class="pot-list-header">POT # <span id="pot-uid">-</span> </div>
+                    <input type="hidden" value="0" id="pot-index" />
+                    <div class="pot-list-header">POTS
+                        <a href="javascript:void(0)" id="pot-backward" onclick="DApp.pagePots(this)" style="float:left;margin-left:10px;"><i class="fas fa-backward"></i></a>
+                        <a href="javascript:void(0)" id="pot-forward" onclick="DApp.pagePots(this)" style="float:right;margin-right:10px;"><i class="fas fa-forward"></i></a>
+                    </div>
                     <div class="pot-list">
                         <table class="pot-list-item tbl">
                             <tr>
+                                <td>POT #</td>
+                                <td><span id="pot-uid">-</span> &nbsp; <a href="javascript:void(0)" style="font-size:.9em;color:#F2D718" onclick="DApp.selectPot(this)">SELECT</a></td>
+                            </tr>
+                            <tr>
                                 <td>BALANCE</td>
-                                <td class="green-text" style="font-size:1.2em;"><span id="pot-balance">-</span> ETH</td>
+                                <td style="font-size:1.5em;"><span id="pot-balance">-</span> <small>ETH</small></td>
                             </tr>
                             <tr>
                                 <td>BUY IN</td>
-                                <td><span id="pot-entry">-</span> ETH</td>
-                            </tr>
-                            <tr>
-                                <td>TOKENS</td>
-                                <td><span id="pot-tokens">-</span> IROLL</td>
+                                <td><span id="pot-entry">-</span> <small>ETH</small></td>
                             </tr>
                             <tr>
                                 <td>SEED</td>
@@ -207,17 +203,32 @@
                                 <td><span id="pot-picks">-</span></td>
                             </tr>
                             <tr>
-                                <td>MATCH</td>
+                                <td>MATCH POT</td>
                                 <td><span id="pot-custom">-</span></td>
                             </tr>
                             <tr>
-                                <td>DICE</td>
+                                <td>POT DICE</td>
                                 <td><span id="pot-customroll">-</span></td>
                             </tr>
                         </table>
                         <table class="token-rewards">
                             <tr>
-                                <th title="Four of a Kind">4K</th>
+                                <th title="JACKPOT">JP</th>
+                                <th title="ALL SIXES">A6</th>
+                                <th title="PLAYER PICK">PP</th>
+                                <th title="MATCH POT DICE">MD</th>
+                                <th title="FOUR OF A KIND">4K</th>
+                            </tr>
+                            <tr>
+                                <td><span id="pot-rwd0"></span></td>
+                                <td><span id="pot-rwd1"></span></td>
+                                <td><span id="pot-rwd2"></span></td>
+                                <td><span id="pot-rwd3"></span></td>
+                                <td><span id="pot-rwd4"></span></td>
+                            </tr>
+                        </table>
+                        <table class="token-rewards">
+                            <tr>
                                 <th title="Large Straight">LS</th>
                                 <th title="Full House">FH</th>
                                 <th title="Small Straight">SS</th>
@@ -226,20 +237,19 @@
                                 <th title="One Pair">1P</th>
                             </tr>
                             <tr>
-                                <td><span id="pot-rwd4">-</span></td>
-                                <td><span id="pot-rwd5">-</span></td>
-                                <td><span id="pot-rwd6">-</span></td>
-                                <td><span id="pot-rwd7">-</span></td>
-                                <td><span id="pot-rwd8">-</span></td>
-                                <td><span id="pot-rwd9">-</span></td>
-                                <td><span id="pot-rwd10">-</span></td>
+                                <td><span id="pot-rwd5"></span></td>
+                                <td><span id="pot-rwd6"></span></td>
+                                <td><span id="pot-rwd7"></span></td>
+                                <td><span id="pot-rwd8"></span></td>
+                                <td><span id="pot-rwd9"></span></td>
+                                <td><span id="pot-rwd10"></span></td>
                             </tr>
                         </table>
                         <table class="pager">
                             <tr>
-                                <td><a href="javascript:void(0)" onclick="DApp.previousPot()"><i class="fas fa-backward"></i></td>
-                                <td><a href="javascript:void(0)" onclick="DApp.selectPot()">SELECT POT</a></td>
-                                <td><a href="javascript:void(0)" onclick="DApp.nextPot()"><i class="fas fa-forward"></i></a></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
                             </tr>
                         </table>
                     </div>

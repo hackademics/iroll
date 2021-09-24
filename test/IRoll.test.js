@@ -31,6 +31,12 @@ contract('IRoll', async (accounts) => {
     this.erc1820 = await singletons.ERC1820Registry(accounts[0]);
   });
 
+  it("roll reverts because contract is paused", async () => {
+     await instance.roll(1, playerPicks, { from: accounts[0], value: entry }).then(async (result) => {
+        console.log(result);
+     });
+  });
+
 
   // it("check that contract balance is zero", async() =>{
   //   assert.equal(await token.balanceOf.call(instance.address), 0);
@@ -303,105 +309,105 @@ contract('IRoll', async (accounts) => {
   //   await truffleAssert.reverts(instance.roll(1, playerPicks, { from: accounts[0], value: entry }), "wait");
   // });
 
-  it("tests for one pair", async () => {
-    let onepair = [1, 1, 2, 3, 6];
-    await instance.testScore.call(1, onepair, playerPicks).then(async (result) => {
-      console.log(result[1].toString());
-      assert.equal(result[0], false);
-      assert.equal(result[1], rewards[10]);
-    });
-  });
+  // it("tests for one pair", async () => {
+  //   let onepair = [1, 1, 2, 3, 6];
+  //   await instance.testScore.call(1, onepair, playerPicks).then(async (result) => {
+  //     console.log(result[1].toString());
+  //     assert.equal(result[0], false);
+  //     assert.equal(result[1], rewards[10]);
+  //   });
+  // });
 
-  it("tests for two pair", async () => {
-    let twopair = [1, 1, 2, 2, 6];
-    await instance.testScore.call(1, twopair, playerPicks).then(async (result) => {
-      console.log(result[1].toString());
-      assert.equal(result[0], false);
-      assert.equal(result[1], rewards[9]);
-    });
-  });
+  // it("tests for two pair", async () => {
+  //   let twopair = [1, 1, 2, 2, 6];
+  //   await instance.testScore.call(1, twopair, playerPicks).then(async (result) => {
+  //     console.log(result[1].toString());
+  //     assert.equal(result[0], false);
+  //     assert.equal(result[1], rewards[9]);
+  //   });
+  // });
 
-  it("tests for three of a kind", async () => {
-    let threeoak = [1, 1, 1, 2, 6];
-    await instance.testScore.call(1, threeoak, playerPicks).then(async (result) => {
-      console.log(result[1].toString());
-      assert.equal(result[0], false);
-      assert.equal(result[1], rewards[8]);
-    });
-  });
+  // it("tests for three of a kind", async () => {
+  //   let threeoak = [1, 1, 1, 2, 6];
+  //   await instance.testScore.call(1, threeoak, playerPicks).then(async (result) => {
+  //     console.log(result[1].toString());
+  //     assert.equal(result[0], false);
+  //     assert.equal(result[1], rewards[8]);
+  //   });
+  // });
 
-  it("tests for small straight", async () => {
-    let smst = [1, 2, 3, 5, 6];
-    await instance.testScore.call(1, smst, playerPicks).then(async (result) => {
-      console.log(result[1].toString());
-      assert.equal(result[0], false);
-      assert.equal(result[1], 0);
-    });
+  // it("tests for small straight", async () => {
+  //   let smst = [1, 2, 3, 5, 6];
+  //   await instance.testScore.call(1, smst, playerPicks).then(async (result) => {
+  //     console.log(result[1].toString());
+  //     assert.equal(result[0], false);
+  //     assert.equal(result[1], 0);
+  //   });
 
-    smst = [1, 2, 3, 4, 6];
-    await instance.testScore.call(1, smst, playerPicks).then(async (result) => {
-      console.log(result[1].toString());
-      assert.equal(result[0], false);
-      assert.equal(result[1], rewards[7]);
-    });
+  //   smst = [1, 2, 3, 4, 6];
+  //   await instance.testScore.call(1, smst, playerPicks).then(async (result) => {
+  //     console.log(result[1].toString());
+  //     assert.equal(result[0], false);
+  //     assert.equal(result[1], rewards[7]);
+  //   });
 
-    smst = [3, 4, 5, 6, 1];
-    await instance.testScore.call(1, smst, playerPicks).then(async (result) => {
-      console.log(result[1].toString());
-      assert.equal(result[0], false);
-      assert.equal(result[1], rewards[7]);
-    });
+  //   smst = [3, 4, 5, 6, 1];
+  //   await instance.testScore.call(1, smst, playerPicks).then(async (result) => {
+  //     console.log(result[1].toString());
+  //     assert.equal(result[0], false);
+  //     assert.equal(result[1], rewards[7]);
+  //   });
 
-    smst = [6, 5, 4, 3, 1];
-    await instance.testScore.call(1, smst, playerPicks).then(async (result) => {
-      console.log(result[1].toString());
-      assert.equal(result[0], false);
-      assert.equal(result[1], rewards[7]);
-    });
-  });
+  //   smst = [6, 5, 4, 3, 1];
+  //   await instance.testScore.call(1, smst, playerPicks).then(async (result) => {
+  //     console.log(result[1].toString());
+  //     assert.equal(result[0], false);
+  //     assert.equal(result[1], rewards[7]);
+  //   });
+  // });
 
-  it("tests for full house", async () => {
-    let fh = [1, 1, 2, 2, 2];
-    await instance.testScore.call(1, fh, playerPicks).then(async (result) => {
-      console.log(result[1].toString());
-      assert.equal(result[0], false);
-      assert.equal(result[1], rewards[6]);
-    });
-  });
+  // it("tests for full house", async () => {
+  //   let fh = [1, 1, 2, 2, 2];
+  //   await instance.testScore.call(1, fh, playerPicks).then(async (result) => {
+  //     console.log(result[1].toString());
+  //     assert.equal(result[0], false);
+  //     assert.equal(result[1], rewards[6]);
+  //   });
+  // });
 
-  it("tests for large straight", async () => {
-    let lg = [1, 2, 3, 4, 5];
-    await instance.testScore.call(1, lg, playerPicks).then(async (result) => {
-      console.log(result[1].toString());
-      assert.equal(result[0], false);
-      assert.equal(result[1], rewards[5]);
-    });
+  // it("tests for large straight", async () => {
+  //   let lg = [1, 2, 3, 4, 5];
+  //   await instance.testScore.call(1, lg, playerPicks).then(async (result) => {
+  //     console.log(result[1].toString());
+  //     assert.equal(result[0], false);
+  //     assert.equal(result[1], rewards[5]);
+  //   });
 
-    let lg2 = [2, 3, 4, 5, 6];
-    await instance.testScore.call(1, lg2, playerPicks).then(async (result) => {
-      console.log(result[1].toString());
-      assert.equal(result[0], false);
-      assert.equal(result[1], rewards[5]);
-    });
-  });
+  //   let lg2 = [2, 3, 4, 5, 6];
+  //   await instance.testScore.call(1, lg2, playerPicks).then(async (result) => {
+  //     console.log(result[1].toString());
+  //     assert.equal(result[0], false);
+  //     assert.equal(result[1], rewards[5]);
+  //   });
+  // });
 
-  it("tests for four of a kind", async () => {
-    let foak = [1, 1, 1, 1, 5];
-    await instance.testScore.call(1, foak, playerPicks).then(async (result) => {
-      console.log(result[1].toString());
-      assert.equal(result[0], false);
-      assert.equal(result[1], rewards[4]);
-    });
-  });
+  // it("tests for four of a kind", async () => {
+  //   let foak = [1, 1, 1, 1, 5];
+  //   await instance.testScore.call(1, foak, playerPicks).then(async (result) => {
+  //     console.log(result[1].toString());
+  //     assert.equal(result[0], false);
+  //     assert.equal(result[1], rewards[4]);
+  //   });
+  // });
 
-  it("tests for jackpot five of a kind", async () => {
-    let jp = [1, 1, 1, 1, 1];
-    await instance.testScore.call(1, jp, playerPicks).then(async (result) => {
-      console.log(result[1].toString());
-      assert.equal(result[0], true);
-      assert.equal(result[1], rewards[0]);
-    });
-  });
+  // it("tests for jackpot five of a kind", async () => {
+  //   let jp = [1, 1, 1, 1, 1];
+  //   await instance.testScore.call(1, jp, playerPicks).then(async (result) => {
+  //     console.log(result[1].toString());
+  //     assert.equal(result[0], true);
+  //     assert.equal(result[1], rewards[0]);
+  //   });
+  // });
 
 
 });

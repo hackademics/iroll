@@ -3,7 +3,7 @@ body  {border:none; padding:0; margin:0; height:100%; width:100%;font-family:'Fr
 table {border:none; border-spacing:0; padding:0; margin:0; width:100%;}
 table tbody tr td {border:none;border-spacing:0;height:100%;padding:0;margin:0;vertical-align:top;text-align:left;}
 hr {width:100%;}
-a {color:#B0D9EA;}
+a {color:#F1F1F1;}
 
 ::-webkit-scrollbar-track {
   background: #333;
@@ -21,9 +21,9 @@ a {color:#B0D9EA;}
 #root{width:1000px;margin:0 auto;}
 
 header {width:100%;}
-#header {width:100%;min-height:40px;background-color:#13253E;color:#f1f1f1;border-radius:0 0 5px 5px;}
+#header {width:100%;min-height:50px;background-color:#13253E;color:#f1f1f1;border-radius:0 0 5px 5px;}
 #header td {vertical-align:middle;padding:10px;}
-#header td:nth-child(2) {width:50%;text-align:center;}
+#header td:nth-child(2) {width:50%;text-align:center;font-size:2em;}
 
 main{width:100%;color:#f1f1f1;}
 #hud {width:100%;display:none;padding:5px;}
@@ -35,20 +35,20 @@ main{width:100%;color:#f1f1f1;}
 footer{display:block;}
 #footer{width:100%;border-radius:5px 5px 0 0;}
 
-table.tbl tr td:nth-child(1) {font-size:14px;padding:4px 0;vertical-align: middle;color:#777}
-table.tbl tr td:nth-child(2) {color:#F1F1F1;}
+table.tbl tr td:nth-child(1) {max-width:100px;font-size:14px;padding:10px 0;vertical-align: middle;color:#777}
+table.tbl tr td:nth-child(2) {color:#F1F1F1;vertical-align: middle;margin-left:5px;}
 
-table.list tr th{font-size:14px;padding:4px 0;vertical-align: middle;background-color:#444;color:#ccc;}
+table.list tr th{font-size:14px;padding:10px 0;vertical-align: middle;background-color:#444;color:#ccc;}
 table.list tr th:nth-child(1){text-align:left;width:200px;text-indent:5px;}
-table.list tr th:nth-child(2){width:200px;text-align:center;}
-table.list tr th:nth-child(3){width:100px;text-align:center;}
-table.list tr th:nth-child(4){width:100px;text-align:right;padding-right:5px;}
+table.list tr th:nth-child(2){width:250px;text-align:center;}
+table.list tr th:nth-child(3){width:75px;text-align:center;}
+table.list tr th:nth-child(4){width:75px;text-align:right;padding-right:5px;}
 
-table.list tr td{font-size:14px;padding:4px 0;vertical-align: middle;color:#777;}
+table.list tr td{font-size:14px;padding:10px 0;vertical-align: middle;color:#777;}
 table.list tr td:nth-child(1){text-align:left;width:200px;}
-table.list tr td:nth-child(2){width:200px;text-align:center;}
-table.list tr td:nth-child(3){width:100px;text-align:center;}
-table.list tr td:nth-child(4){width:100px;text-align:right;margin-right:5px;}
+table.list tr td:nth-child(2){width:250px;text-align:center;}
+table.list tr td:nth-child(3){width:75px;text-align:center;}
+table.list tr td:nth-child(4){width:75px;text-align:right;margin-right:5px;}
 
 
 .green-text{color:#659E95}
@@ -59,7 +59,7 @@ table.list tr td:nth-child(4){width:100px;text-align:right;margin-right:5px;}
 .pit-circle {text-align:center;border:solid 2px #F2D718;border-radius:50%;margin:10px;height:65px;line-height:65px;color:#F2D718;font-size:1.8em;}
 
 .pit-box{border:solid 2px #F2D718;color:#F2D718;border-radius:5px 5px 5px 5px;margin:10px;padding:10px;text-align:center;}
-.pit-pick-box{width:30px;text-align:center;color:#F2D718;background-color:#417066;border:1px solid #F2D718;font-weight:bold;font-size:1.1em;padding:2px 0;} 
+.pit-pick-box{width:30px;text-align:center;color:#F1F1F1;background-color:#BB4100;border:1px solid #F2D718;font-weight:bold;font-size:1.1em;padding:2px 0;border-radius:5px 5px 5px 5px;} 
 
 #frmCreatePot tr td {padding:5px 0;}
 

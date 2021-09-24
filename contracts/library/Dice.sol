@@ -150,4 +150,50 @@ library Dice {
         for(uint8 i=0;i<5;i++){ if(_d[i] != _d2[i]){ return false; } }
         return true;
     }   
+
+    function score (
+            bool _sixes, 
+            bool _picks, 
+            bool _custom, 
+            uint[11] memory _rwd, 
+            uint8[5] memory _cr,
+            uint8[5] memory _di, 
+            uint8[5] memory _pi
+        ) 
+        public pure returns (bool, uint256){
+        require(validDice(_di), "_di");
+              
+        bool won = false;
+        uint256 rwd = 0;        
+
+        if(_sixes && isAllSixes(_di)){
+            won = true;
+            rwd = _rwd[1];
+        } else if(!_sixes && isFiveOfKind(_di)){
+            won = true;
+            rwd = _rwd[0];
+        }else if(_picks && validDice(_pi) && isMatch(_di, _pi)){
+            won = true;
+            rwd =_rwd[2];
+        } else if(_custom && validDice(_cr) && isMatch(_di, _cr)){
+            won = true;
+            rwd =_rwd[3];
+        }  
+
+        /// @dev exit early if jackpot to skip additional scoring
+        if(won){
+            return (true, rwd);
+        }   
+
+        // /// @dev get token rewards index for non jackpot combinations
+         if(isFourOfKind(_di)){ rwd = _rwd[4]; } 
+        else if(isLargeStraight(_di)){ rwd = _rwd[5]; }  
+        else if(isFullHouse(_di)){ rwd = _rwd[6]; }
+        else if(isSmallStraight(_di)){ rwd = _rwd[7]; } 
+        else if(isThreeOfAKind(_di)){ rwd =_rwd[8]; } 
+        else if(isTwoPair(_di)){ rwd = _rwd[9]; } 
+        else if(isSinglePair(_di)){ rwd = _rwd[10]; }
+
+         return (false, rwd);
+    }
 }
