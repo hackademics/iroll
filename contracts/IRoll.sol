@@ -2,237 +2,181 @@
 pragma solidity =0.8.7;
 
 import { Dice } from './library/Dice.sol';
-import "./IRollRNG.sol";
-import "./interface/IIRoll.sol";
-import "./interface/IIRollToken.sol";
+import "./IRollToken.sol";
+import "./IRollVRF.sol";
 
-import "@openzeppelin/contracts/token/ERC777/ERC777.sol";
-import "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
-import "@openzeppelin/contracts/utils/introspection/IERC1820Registry.sol";
-import "@openzeppelin/contracts/utils/introspection/ERC1820Implementer.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/security/PullPayment.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract IRoll is IIRoll, Ownable, PullPayment, ReentrancyGuard, Pausable, IERC777Recipient, ERC1820Implementer {
-    
-    using SafeMath for *;
-	using Address  for address;    
-    using Counters for Counters.Counter;
-    using Dice for uint8[5];
-    using Dice for uint256; 
-
-    /// IROLL token
-    IERC777 public token;
-
-    IRollRNG private rng;
-
-    /// pot unique ids
-    Counters.Counter public PUID;
-
-    /// store thee rollers
-    address payable[] private players;
-
-    /// player's VRF Request in flight for pot
-    mapping(address => mapping(uint256 => bytes32)) plyrVrf;  
-
-    /// player's VRF Request in flight for pot
-    mapping(address => mapping(uint256 => uint8[5])) plyrPicks;           
-
-    /// player's time interval to wait between rolls
-    mapping(address => mapping(uint256 => uint256)) nextRoll;     
-
-    uint256[] private pots;
-    mapping(uint256 => Pot) mPot; 
-    
-    /// IERC777 token recipient
-    IERC1820Registry internal constant erc1820 = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
-    bytes32 private constant RECIPIENT_HASH = keccak256("ERC777TokensRecipient");   
-
-    constructor(address _token) {         
-        token = IERC777(_token);
-
-        /// ERC1820 RECIPIENT / SENDER
-        erc1820.setInterfaceImplementer(address(this), RECIPIENT_HASH, address(this));   
-    }
-
-    /// @dev Roll function
-    /// loads pot by id, if pot inactive or 404 then revert
-    function roll(uint256 _puid, uint8[5] calldata _pi) public payable override whenNotPaused returns(bytes32){
-        Pot storage p = mPot[_puid];
-        require(p.UID == _puid && p.active, "404");     
-        require(allowed(p.UID), "wait");
-        require(p.entry == msg.value, "fee");
-        require(p.balance > p.entry, "seed");
-
-        if(p.picks && _pi.validDice() == false){ revert("picks"); }
-
-        plyrPicks[msg.sender][_puid] = _pi;
-
-        p.balance = p.balance.add(msg.value);        
-
-        nextRoll[msg.sender][p.UID] = block.timestamp.add(p.interval);
-        
-        /// request random number from VRF
-        /// todo REMOVE chain id check before mainnet
-        plyrVrf[msg.sender][p.UID] = new IRollRNG(0x01BE23585060835E02B77ef475b0Cc51aA1e0709, 0xb3dCcb4Cf7a26f6cf6B120Cf5A73875B7BBc655B).mockRequest(p.UID, msg.sender);
-        //plyrVrf[msg.sender][p.UID] = new IRollRNG(vrfToken, vrfCoord).request(p.UID);       
-
-        return (0);
-    } 
-
-    /// @dev check if roll request satisfies pot interval; 
-    function allowed(uint256 _puid) public override view returns(bool){
-        if(nextRoll[msg.sender][_puid] == 0){ return true;}
-        if(block.timestamp >= nextRoll[msg.sender][_puid]){ return true; }        
-        return false;
+contract IRoll is Ownable {
+     
+    struct Pot {
+        uint8 seed;
+        uint8 fee;
+        bytes5 dice;
+        address owner;
+        address linkWallet;
+        uint256 interval;        
+        uint256 balance;           
+        uint256 entry;
+        uint256 UID;
     }    
 
-    /// @dev handle call back 
-    function vrfCallback(bytes32 _vrfId, uint256 _vrfNum, uint256 _puid, address _player) external {
-        //require(plyrVrf[_player][p.UID] == _vrfID, "404");
+    event RollInit(address indexed player, bytes32 indexed vrfid, uint256 indexed puid, uint256 nextroll);
+    event Rolls(address indexed player, bytes32 indexed vrfid, uint256 indexed puid, bool jp, uint256 payout, uint256 reward, bytes5 dice); 
+    event Jackpot(address indexed player, bytes32 indexed vrfid, uint256 indexed puid, bytes5 dice, uint256 payout, uint256 reward);
+    event OwnerSet(address indexed ms, uint256 indexed puid, address prv, address cur);
+
+    IRollVRF private vrf;
+    IRollToken private token;
+    uint256[] private pots;
+    uint256 private PUID;
+    bool private lock;
+  
+    uint256[11] private rewards = [0, 2, 3, 5, 8, 25, 32, 51, 1295, 7775, 1295]; 
+  
+    mapping(uint256 => Pot) pot;
+    mapping(bytes32 => address) playerAddress;
+    mapping(bytes32 => uint256) playerPot;
+    mapping(address => uint256) playerEth;
+    mapping(address => uint256) playerIRoll;
+    mapping(address => mapping(uint256 => uint256)) playerNextRoll;
+
+    constructor(address _token, address _vrf){     
+        token = IRollToken(_token);
+        vrf = IRollVRF(_vrf);
+        PUID = 0;
+    }
+
+    function roll(uint256 _puid) public payable returns(bytes32) {       
+        Pot storage p = pot[_puid];
+        require((p.UID == _puid) && allowed(_puid) && (msg.value == p.entry) && (p.balance >= (p.entry*2)), "fail");
+
+        p.balance = (p.balance + msg.value);
+
+        bytes32 reqId = keccak256(abi.encodePacked(block.difficulty, block.timestamp));
         
-        Pot storage pot = mPot[_puid];
-        require(pot.UID == _puid && pot.active, "404");
+        playerAddress[reqId] = msg.sender;
+        playerPot[reqId] = _puid;
+        playerNextRoll[msg.sender][_puid] = uint256(block.timestamp + p.interval);
+ 
+        reqId = vrf.mockRequest(reqId);
 
-        uint8[5] memory dice = _vrfNum.getDice();
-        uint8[5] memory picks = plyrPicks[_player][_puid];
+        emit RollInit(msg.sender, reqId, playerPot[reqId], playerNextRoll[msg.sender][_puid]);
 
-        bool jackpot = false;
-        uint256 tokens = 0;
-        uint256 payout = 0;
+        return reqId;
+    }
+
+    function rollResponse(bytes32 requestId, uint256 _random) external {  
+        Pot storage p = pot[playerPot[requestId]];           
+
+        (bytes5 dice, bool isJackpot, uint8 rewardIndex) = Dice.score(_random, p.dice);
+
+        uint reward = rewards[rewardIndex];
         
-        /// score 
-        (jackpot, tokens) = Dice.score(pot.sixes, pot.picks, pot.custom, pot.rewards, pot.customRoll, dice, picks);
+        if(reward > 0){
+            playerIRoll[playerAddress[requestId]] = (playerIRoll[playerAddress[requestId]] + reward);
+        }
+        
+        uint256 payout; 
+        if(isJackpot){
+            uint256 pSeed = ((p.balance*p.seed)/100);
+            uint256 pFee = (((p.balance-pSeed)*p.fee)/100);
+            payout =  ((p.balance-pSeed)-pFee);
 
-        /// pay winners
-        if(jackpot){           
-            //calculate payout (balance - seedPercent - feePercent)
-            uint256 pSeed = pot.balance.mul(pot.seed).div(100);
-            uint256 pFee = pot.balance.sub(pSeed).mul(pot.fee).div(100);
-            payout =  pot.balance.sub(pSeed).sub(pFee);
-
-            /// pay player
-            _asyncTransfer(_player, payout);
-
-            /// pay pot owner
-            _asyncTransfer(pot.owner, pFee);
-
-            /// update pot balance
-            pot.balance = pSeed;
-
-            emit Jackpot(_player, _vrfId, _puid, dice, picks, payout, tokens);
+            playerEth[playerAddress[requestId]] = (playerEth[playerAddress[requestId]] + payout);
+            playerEth[p.owner] = (playerEth[p.owner] + pFee);
+            p.balance = pSeed;            
+        
+            emit Jackpot(playerAddress[requestId], requestId, p.UID, dice, payout, reward);            
         }
 
-        /// reward tokens
-        if(tokens > 0) {
-            if(token.balanceOf(address(this)) > tokens){
-                token.send(payable(_player), tokens, abi.encodePacked(_puid)); 
-            }
-        }         
+        emit Rolls(playerAddress[requestId], requestId, playerPot[requestId], isJackpot, payout, reward, dice);
+    }
 
-        emit Rolls(_player,_vrfId, pot.UID, jackpot, payout, tokens, dice, picks);       
-    } 
-    
-    /// @dev create a new pot 
-    function createPot(uint256 _ent, uint256 _intrv, uint8 _seed, uint8 _fee, bool _sxs, bool _pck, bool _cstm, uint8[5] calldata _crll, uint256[11] calldata _rwd) 
-    public override returns(uint256) { 
-        PUID.increment(); 
+    function allowed(uint256 _puid) public view returns(bool){
+        return ((playerNextRoll[msg.sender][_puid] == 0) || (block.timestamp >= playerNextRoll[msg.sender][_puid]));     
+    }
 
-        Pot storage p = mPot[PUID.current()];        
-        p.UID = PUID.current();       
+    function createPot(uint256 _ent, uint256 _intrv, uint8 _seed, uint8 _fee, bytes5 _dice, address _linkWallet) public returns(uint256) { 
+        require(!lock, "lock");
+        lock = true;
+        
+        PUID++;
+        Pot storage p = pot[PUID];        
+        p.UID = PUID;       
         p.entry = _ent;
         p.interval = uint256(_intrv * 1 minutes);
         p.seed = _seed;
         p.fee = _fee;
-        p.sixes = _sxs;
-        p.picks = _pck;
-        p.custom = _cstm;
-        p.rewards = _rwd;
+        p.dice = _dice;
         p.owner = owner();
-        p.active = true;
-        p.customRoll = _crll;
+        p.linkWallet = _linkWallet;
         p.balance = 0;
 
         pots.push(p.UID);
 
+        lock = false;
+        
         return p.UID;
-    }         
+    }   
 
-    /// @dev accepts ether to increase pot
-    function seedPot(uint256 _puid) public payable override whenNotPaused { 
-        require(mPot[_puid].UID > 0, "404");
-        mPot[_puid].balance = mPot[_puid].balance.add(msg.value);
+    function withdraw() public {
+        require(!lock, "lock");
+        lock = true;
+        uint256 balance = playerEth[msg.sender];
+        msg.sender.transfer(balance);
+        playerEth[msg.sender] = 0;
+        lock = false;
+    }
+
+    function mint() public {
+        require(!lock, "lock");        
+        lock = true;
+        uint256 balance =  playerIRoll[msg.sender];
+        //token._mint(msg.sender, playerIRoll[msg.sender]);
+        playerIRoll[msg.sender] = 0;
+        lock = false;
+    }
+
+    function seedPot(uint256 _puid) public payable { 
+        require(!lock, "lock");
+        lock = true;
+        pot[_puid].balance = (pot[_puid].balance + msg.value);
+        lock = false;
     } 
 
-    /// @dev get pot from pot array, revert if not found or not active
-    function getPot(uint256 _puid) public override view whenNotPaused returns(Pot memory){
-        require(mPot[_puid].UID > 0 && mPot[_puid].active, "404");
-        return mPot[_puid];
+    function getPot(uint256 _puid) public view returns(Pot memory){
+        return pot[_puid];
     } 
 
-    /// @dev get pots
-    function getPots() public override view whenNotPaused returns(uint256[] memory){ 
+    function getPots() public view returns(uint256[] memory){ 
         return pots;
     }   
 
-    /// @dev get player token balance
-    function getPlayerBalance() public override view whenNotPaused returns(uint256){
-        return token.balanceOf(msg.sender);
-    } 
-
-    /// @dev get player token balance
-    function getRewardBalance() public override view whenNotPaused returns(uint256){
-        return token.balanceOf(address(this)); 
-    }     
-
-    /// @dev update the pot's owner
-    function setPotOwner(uint256 _puid, address _owner) public override onlyOwner whenNotPaused {
-        mPot[_puid].owner = _owner; 
-    } 
-
-    function setPotActive(uint _puid, bool _actv) public override onlyOwner whenNotPaused {
-        mPot[_puid].active = _actv; 
-    }       
-
-    /// @dev required for ERC777 token recipient
-    function tokensReceived( address _op, address _frm, address _to, uint256 _amt, bytes calldata _usrd, bytes calldata _opd) external override {
-        require(msg.sender == address(token));
-        emit TokensReceived(msg.sender, _op, _frm, _to, _amt, _usrd, _opd);
-    }         
-
-    /// @dev pause contract from executing
-    function pause() public whenNotPaused onlyOwner {
-        emit PauseSet(msg.sender, true);
-        _pause();        
+    function getPlayerInfo() public view returns(uint256, uint256, uint256){
+        return (token.balanceOf(msg.sender), playerEth[msg.sender], playerIRoll[msg.sender]);
     }
 
-    /// @dev unpause contract and resume executing
-    function unpause() public whenPaused onlyOwner {
-        emit PauseSet(msg.sender, false);
-        _unpause();        
+    function getPlayerNextRoll(uint256 _puid) public view returns(uint256, uint256){
+        return (playerNextRoll[msg.sender][_puid], block.timestamp);
     } 
 
-    /// @dev distribute tokens to players
-    /// check not to drop more than half of tokens in contract
-    /// balance/2 > amount x num of players
-    function airdrop(uint256 _amt) public onlyOwner whenNotPaused {
-        require(token.balanceOf(address(this)).div(2) > _amt.mul(players.length),"funds");
-        for(uint256 i=0;i<players.length;i++){
-            address r = players[i];
-            token.send(r, _amt, "0x");
-        }
-    }    
+    function getRewards() public view returns(uint256[11] memory){
+        return rewards;
+    }     
 
-    /// @dev TEST - remove before mainnet
-    /// todo REMOVE
-    //function testScore(uint256 _id, uint8[5] calldata _di, uint8[5] calldata _pi) public onlyOwner returns(bool, uint256) {
-        //plyrVrf[msg.sender][_id] = 0;
-        //return Dice.score(msg.sender, _id, _di, _pi);
-    //}
+    function setPotOwner(uint256 _puid, address _owner) public onlyOwner {
+        require(!lock,"lock");
+        lock = true;
+        pot[_puid].owner = _owner; 
+        lock = false;
+    } 
 
+
+    function test() public returns(bytes5){
+        bytes5 a = bytes5(0x0605040302);
+        bytes5 b = bytes5(0x0605040203);
+        a = a[0] << 1;
+        return a; 
+    }
 }

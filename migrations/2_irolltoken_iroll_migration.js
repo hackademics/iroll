@@ -5,8 +5,7 @@ const { singletons } = require('@openzeppelin/test-helpers');
 const Dice = artifacts.require("./contracts/library/Dice.sol");
 const IRoll = artifacts.require("./contracts/IRoll.sol");
 const IRollToken = artifacts.require("./contracts/token/IRollToken.sol");
-
-const IRollRNG = artifacts.require("./contracts/chainlink/IRollRNG.sol");
+const IRollVRF = artifacts.require("./contracts/token/IRollVRF.sol");
 
 module.exports = async (deployer, network, accounts) => {  
   
@@ -37,6 +36,10 @@ module.exports = async (deployer, network, accounts) => {
   let yearTwo = 1694411999;
   let yearThree = 1726034399;
   let yearFour = 1757570399;
+
+  let tokenName = "IROLL";
+  let tokenSymbol = "IROLL";
+  let tokenSupply = web3.utils.toBN(2000000000);
 
   if (network === 'development') {
     await singletons.ERC1820Registry(accounts[0]);
@@ -107,9 +110,11 @@ module.exports = async (deployer, network, accounts) => {
     vrfKeyHash = 0xc251acd21ec4fb7f31bb8868288bfdbaeb4fbfec2df3735ddbd4f7dc8d60103c;
     vrfFee = (0.2 * 10 ** 18);
   }
+
+  let rewards = [web3.utils.toWei('1295', "ether"), web3.utils.toWei('7775', "ether"), web3.utils.toWei('1295', "ether"), web3.utils.toWei('1295', "ether"), web3.utils.toWei('51', "ether"), web3.utils.toWei('32', "ether"), web3.utils.toWei('25', "ether"), web3.utils.toWei('8', "ether"), web3.utils.toWei('5', "ether"), web3.utils.toWei('3', "ether"), web3.utils.toWei('2', "ether")];
   
   /// Deploy IROLL Token
-  await deployer.deploy(IRollToken);
+  await deployer.deploy(IRollToken, tokenName, tokenSymbol, tokenSupply);
   
   /// get an instance of the IRollToken contract
   const token = await IRollToken.deployed();
@@ -120,31 +125,15 @@ module.exports = async (deployer, network, accounts) => {
   /// Link Dice lib to IRoll contract
   await deployer.link(Dice, IRoll);
 
+  await deployer.deploy(IRollVRF, vrfCoordinator, vrfToken, vrfKeyHash, web3.utils.toBN(vrfFee));
+
+  const vrf = await IRollVRF.deployed();
+~
   /// Deploy IRoll contract
-  ///   param IRoll token address
-  ///   param VRF LINK Token address for network
-  ///   param VRF Coordinator address for network
-  await deployer.deploy(IRoll, token.address);
+  await deployer.deploy(IRoll, token.address, vrf.address);
 
   /// Get instance of IRoll contract
   const iroll = await IRoll.deployed();
-
-  /// Deploy IRoll Randomn Number Generator
-  ///   param VRF LINK Token address for network
-  ///   param VRF Coordinator address for network
-  await deployer.deploy(IRollRNG, vrfToken, vrfCoordinator);
-  
-  /// Get instance of IRollRNG contract
-  const rng = await IRollRNG.deployed();
-
-  /// Set VRF Key Hash for RNG
-  rng.setKeyHash(vrfKeyHash);
-
-  /// Set VRF LINK Fee required for each RNG request
-  rng.setFee(web3.utils.toBN(vrfFee));
-
-  /// Set the caller contract address to IRoll contract address
-  rng.setCallerContract(iroll.address);
 
   let wallet = accounts[0];
   let entry = web3.utils.toBN(.002 * 10 ** 18);
@@ -154,25 +143,25 @@ module.exports = async (deployer, network, accounts) => {
   let sixes = 0;
   let picks = 0;
   let custom = 0;
-  let rewards = [web3.utils.toWei('1295', "ether"), web3.utils.toWei('7775', "ether"), web3.utils.toWei('1295', "ether"), web3.utils.toWei('1295', "ether"), web3.utils.toWei('51', "ether"), web3.utils.toWei('32', "ether"), web3.utils.toWei('25', "ether"), web3.utils.toWei('8', "ether"), web3.utils.toWei('5', "ether"), web3.utils.toWei('3', "ether"), web3.utils.toWei('2', "ether")];
+  //let rewards = [web3.utils.toWei('1295', "ether"), web3.utils.toWei('7775', "ether"), web3.utils.toWei('1295', "ether"), web3.utils.toWei('1295', "ether"), web3.utils.toWei('51', "ether"), web3.utils.toWei('32', "ether"), web3.utils.toWei('25', "ether"), web3.utils.toWei('8', "ether"), web3.utils.toWei('5', "ether"), web3.utils.toWei('3', "ether"), web3.utils.toWei('2', "ether")];
   let customRoll = [4, 2, 1, 2, 4];
 
   let entry1 = web3.utils.toBN((0.004 * 10 ** 18));
-  let entry2 = web3.utils.toBN((0.04 * 10 ** 18));
+  let entry2 = web3.utils.toBN((0.03201 * 10 ** 18));
   let entry3 = web3.utils.toBN((0.002 * 10 ** 18));
   let entry4 = web3.utils.toBN((0.2 * 10 ** 18));
 
-  await iroll.createPot(entry, interval, seed, fee, sixes, picks, custom, customRoll, rewards);
-  await iroll.seedPot(1, { from: accounts[0], value: entry1 });
+  await iroll.createPot(entry1, interval, seed, fee, '0x0102030405', accounts[0]);
+  await iroll.seedPot(1, { from: accounts[0], value: entry1 * 2 });
 
-  await iroll.createPot(web3.utils.toBN(.02 * 10 ** 18), 5, 20, 2, true, false, false, [6, 1, 6, 1, 6], rewards);
-  await iroll.seedPot(2, { from: accounts[0], value: entry2 });
+  await iroll.createPot(entry2, 2, 20, fee, '0x0402040204', accounts[0]);
+  await iroll.seedPot(2, { from: accounts[0], value: entry2 * 2 });
 
-  await iroll.createPot(web3.utils.toBN(.001 * 10 ** 18), 2, 15, 5, false, true, true, [1, 2, 5, 4, 3], rewards);
-  await iroll.seedPot(3, { from: accounts[0], value: entry3 });
+  await iroll.createPot(entry3, 3, 25, fee, '0x0606060605', accounts[0]);
+  await iroll.seedPot(3, { from: accounts[0], value: entry3 * 2 });
 
-  await iroll.createPot(web3.utils.toBN(.1 * 10 ** 18), 2, 10, 7, false, true, true, [5, 5, 5, 3, 3], rewards);
-  await iroll.seedPot(4, { from: accounts[0], value: entry4 });
+  await iroll.createPot(entry4, 4, 40, fee, '0x0504030201', accounts[0]);
+  await iroll.seedPot(4, { from: accounts[0], value: entry4 * 2 });
 
   await token.transfer(iroll.address, web3.utils.toWei('10000', "ether"), { from: accounts[0] });
   

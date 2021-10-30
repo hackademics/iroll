@@ -9,7 +9,9 @@ module.exports = {
     development: {
       host: "127.0.0.1",
       port: 7545,
-      network_id: "5777"
+      network_id: "5777",
+      gasPrice: 100000000000,
+      gas: 6721975
     },
     ropsten: {
       provider: () => new HDWalletProvider(mnemonic, 'https://ropsten.infura.io/v3/${infuraProjectID}'),
@@ -116,7 +118,7 @@ module.exports = {
        settings: {
         optimizer: {
           enabled: true,
-          runs: 1100
+          runs: 600
         },
         metadata: { bytecodeHash: 'none' },
         evmVersion: "constantinople"
