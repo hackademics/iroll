@@ -1,0 +1,500 @@
+<html>
+<head>
+    <title>IRoll.io</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="http://fonts.cdnfonts.com/css/eczar" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300&display=swap" rel="stylesheet">
+    <!--<link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script> -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta2/css/all.min.css" />
+    <link rel="stylesheet" href="bundle.css" />    
+<script defer src="bundle.js"></script></head>
+<body>
+<div id="container">
+    <header class="mdc-top-app-bar mdc-top-app-bar--fixed mdc-top-app-bar--dense" style="width:500px;">
+        <div class="mdc-top-app-bar__row">
+            <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+                <span class="mdc-top-app-bar__title app-title">IROLL</span>
+            </section>
+            <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end" role="toolbar">
+                    <button class="mdc-button mdc-button--raised mdc-button--leading appbar-button" id="button-connect">
+                        <span class="mdc-button__ripple"></span>
+                        <i class="material-icons mdc-button__icon" aria-hidden="true">account_balance_wallet</i>
+                        <span class="mdc-button__label">Connect</span>
+                    </button>
+            </section>
+        </div>
+    </header>
+    <main class="mdc-top-app-bar--dense-fixed-adjust">
+    <div id="view-home">
+    </div>
+    <div id="view-pot-list">
+        <div class="app-list-item">
+            <div class="app-list-image"><img src="https://via.placeholder.com/120x80" /></div>                
+            <div class="app-list-text">
+                <span class="app-list-text-title">Place Holder Text Here</span><br />
+                <span class="app-list-text-description">Loreum ipsono iflunusis </span><br />
+                <span class="app-list-text-balance">.00425 $ETH</span>
+            </div>
+            <div class="app-list-action">
+                <button class="mdc-icon-button material-icons button-view-pot" id="1">
+                    <div class="mdc-icon-button__ripple"></div>
+                    navigate_next
+                </button>
+            </div>
+        </div>
+        <div class="app-list-item">
+            <div class="app-list-image"><img src="https://via.placeholder.com/120x80" /></div>
+            <div class="app-list-text">
+                <span class="app-list-text-title">Place Holder Text Here</span><br />
+                <span class="app-list-text-description">Loreum ipsono iflunusis </span><br />
+                <span class="app-list-text-balance">.00425 $ETH</span>
+            </div>
+            <div class="app-list-action">
+                <button class="mdc-icon-button material-icons button-view-pot" id="2">
+                    <div class="mdc-icon-button__ripple"></div>
+                    navigate_next
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="view-pot" tabindex="0">
+        <div id="app-pot-image"><img id="app-pot-image-src" src="https://via.placeholder.com/800x500" /></div>
+        <table id="app-pot-table">
+            <tr>
+                <td>
+                    <button class="mdc-button mdc-button--raised" style="width:100%;" id="button-roll">
+                        <span class="mdc-button__label" id="app-pot-roll-button-text">Roll Dice</span>
+                    </button>
+                    <table id="app-pot-settings">
+                        <tr>
+                            <td>Balance</td>
+                            <td><span id="app-pot-balance"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Entry Fee</td>
+                            <td><span id="app-pot-entry"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Seed</td>
+                            <td><span id="app-pot-seed"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Fee</td>
+                            <td><span id="app-pot-fee"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Interval</td>
+                            <td><span id="app-pot-interval"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Rolls</td>
+                            <td><span id="app-pot-rolls"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Jackpots</td>
+                            <td><span id="app-pot-jackpots"></span></td>
+                        </tr>
+                    </table>
+                </td>
+                <td>
+                    <table id="app-pot-rewards">
+                        <tr>
+                            <th>COMBO</th>
+                            <th>IROLL</th>
+                            <th>PRIZE</th>
+                        </tr>
+                        <tr>
+                            <td>Five Sixes</td>
+                            <td><span id="app-pot-sixes"></span></td>
+                            <td><span id="app-pot-sixes-prize"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Five Of A Kind</td>
+                            <td><span id="app-pot-5oak"></span></td>
+                            <td><span id="app-pot-5oak-prize"></span></td>                    
+                        </tr>
+                        <tr>
+                            <td>Pot Match</td>
+                            <td><span id="app-pot-match"></span></td>
+                            <td><span id="app-pot-match-prize"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Four Of A Kind</td>
+                            <td><span id="app-pot-4oak"></span></td>
+                            <td><span id="app-pot-4oak-prize"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Large Straight</td>
+                            <td><span id="app-pot-large-straight"></span></td>
+                            <td><span id="app-pot-large-straight-prize"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Full House</td>
+                            <td><span id="app-pot-full-house"></span></td>
+                            <td><span id="app-pot-full-house-prize"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Small Straight</td>
+                            <td><span id="app-pot-small-straight"></span></td>
+                            <td><span id="app-pot-small-straight-prize"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Three Of A Kind</td>
+                            <td><span id="app-pot-3oak"></span></td>
+                            <td><span id="app-pot-3oak-prize"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Two Pair</td>
+                            <td><span id="app-pot-two-pair"></span></td>
+                            <td><span id="app-pot-two-pair-prize"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Single Pair</td>
+                            <td><span id="app-pot-single-pair"></span></td>
+                            <td><span id="app-pot-single-pair-prize"></span></td>
+                        </tr>
+                        <tr>
+                            <td>Bupkis</td>
+                            <td><span id="app-pot-bupkis"></span></td>
+                            <td><span id="app-pot-bupkis-prize"></span></td>
+                        </tr>
+                    </table>                    
+                </td>
+            </tr>
+        </table>
+        <br />
+        <div id="app-pot-rolls">
+
+        </div>
+    </div>
+    <div id="view-progress">
+        <div class="mdc-circular-progress app-progress" style="width:48px;height:48px;" role="progressbar" aria-label="Wait" aria-valuemin="0" aria-valuemax="1">
+            <div class="mdc-circular-progress__determinate-container">
+                <svg class="mdc-circular-progress__determinate-circle-graphic" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                    <circle class="mdc-circular-progress__determinate-track" cx="24" cy="24" r="18" stroke-width="4" />
+                    <circle class="mdc-circular-progress__determinate-circle" cx="24" cy="24" r="18" stroke-dasharray="113.097" stroke-dashoffset="113.097" stroke-width="4" />
+                </svg>
+            </div>
+            <div class="mdc-circular-progress__indeterminate-container">
+                <div class="mdc-circular-progress__spinner-layer">
+                    <div class="mdc-circular-progress__circle-clipper mdc-circular-progress__circle-left">
+                        <svg class="mdc-circular-progress__indeterminate-circle-graphic" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="24" cy="24" r="18" stroke-dasharray="113.097" stroke-dashoffset="56.549" stroke-width="4" />
+                        </svg>
+                    </div>
+                    <div class="mdc-circular-progress__gap-patch">
+                        <svg class="mdc-circular-progress__indeterminate-circle-graphic" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="24" cy="24" r="18" stroke-dasharray="113.097" stroke-dashoffset="56.549" stroke-width="3.2" />
+                        </svg>
+                    </div>
+                    <div class="mdc-circular-progress__circle-clipper mdc-circular-progress__circle-right">
+                        <svg class="mdc-circular-progress__indeterminate-circle-graphic" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="24" cy="24" r="18" stroke-dasharray="113.097" stroke-dashoffset="56.549" stroke-width="4" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="view-roll-result">
+
+    </div>
+    <div id="view-error">
+        ERROR
+    </div>
+    </main>
+    <footer>
+
+    </footer>
+    <div class="mdc-dialog">
+        <div class="mdc-dialog__container">
+            <div class="mdc-dialog__surface" role="alertdialog" aria-modal="true" aria-labelledby="my-dialog-title" aria-describedby="my-dialog-content">
+                <div class="mdc-dialog__content" id="app-dialog-content">
+                    <table id="app-dice">
+                        <tr>
+                            <td><div id="dice-one"></div></td>
+                            <td><div id="dice-two"></div></td>
+                            <td><div id="dice-three"></div></td>
+                            <td><div id="dice-four"></div></td>
+                            <td><div id="dice-five"></div></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="mdc-dialog__scrim"></div>
+    </div>
+</div>
+<!--
+<ul class="mdc-list mdc-list--two-line">
+    <li class="mdc-list-item" tabindex="0">
+        <span class="mdc-list-item__ripple"></span>
+        <span class="mdc-list-item__text">
+            <span class="mdc-list-item__primary-text">Two-line item</span>
+            <span class="mdc-list-item__secondary-text">Secondary text</span>
+        </span>
+    </li>
+    <li class="mdc-list-item">
+        <span class="mdc-list-item__ripple"></span>
+        <span class="mdc-list-item__text">
+            <span class="mdc-list-item__primary-text">Two-line item</span>
+            <span class="mdc-list-item__secondary-text">Secondary text</span>
+        </span>
+    </li>
+    <li class="mdc-list-item">
+        <span class="mdc-list-item__ripple"></span>
+        <span class="mdc-list-item__text">
+            <span class="mdc-list-item__primary-text">Two-line item</span>
+            <span class="mdc-list-item__secondary-text">Secondary text</span>
+        </span>
+    </li>
+</ul>-->
+<!--
+<div id="root">
+    <header>
+        <table id="header" class="header">
+            <tr>
+                <td><div id="iroll-rewards" style="display:none;"><span id="reward-balance"></span></div></td>
+                <td>IROLL.IO</td>
+                <td><div id="pot-search" style="display:none;">POT # &nbsp;<input type="text" id="search-puid" /></div></td>
+            </tr>
+        </table>
+    </header>
+    <main>
+        <table id="hud">
+            <tr>
+                <td id="hud-left"> 
+                <div class="pot-list-header" style="background-color:#3E2A65;">PLAYER</div>
+                <div style="background-color:#222;">
+                <table class="tbl">
+                    <tr>
+                        <td>$ETH</td>
+                        <td><a href="javascript:void(0);" title="CASH OUT ETH"><span id="player-eth"></span> <small>ETH</small></a></td>
+                    </tr>
+                    <tr>
+                        <td>$IROLL</td>
+                        <td><a href="javascript:void(0);" title="MINT IROLL"><span id="player-iroll">..</span> <small>IROLL</small></a></td>
+                    </tr>
+                    <tr>
+                        <td>ROLLS</td>
+                        <td><span id="player-rolls">..</span></td>
+                    </tr>
+                    <tr>
+                        <td>POT</td>
+                        <td><span id="player-pot"></span></td>
+                    </tr>
+                </table>
+                <div class="pot-list-header" style="background-color:#333;">ROLLS
+                <a href="javascript:void(0)" id="roll-back" onclick="DApp.pageRolls(this)" class="backward-btn"><i class="fas fa-backward"></i></a>
+                <a href="javascript:void(0)" id="roll-forward"  onclick="DApp.pageRolls(this)" class="forward-btn"><i class="fas fa-forward"></i></a>
+                </div>                   
+                <table class="tbl" id="player-rolls">
+                    <tr>
+                        <td>BLOCK #</td>
+                        <td><span id="roll-block"></span></td>
+                    </tr>
+                    <tr>
+                        <td>COMBO</td>
+                        <td><span id="roll-combo"></span></td>
+                    </tr>
+                    <tr>
+                        <td>DICE</td>
+                        <td><span id="roll-dice"></span></td>
+                    </tr>
+                    <tr>
+                        <td>POT</td>
+                        <td><span id="roll-puid"></span></td>
+                    </tr>
+                    <tr>
+                        <td>PAYOUT</td>
+                        <td><span id="roll-payout"></span></td>
+                    </tr>
+                    <tr>
+                        <td>TOKENS</td>
+                        <td><span id="roll-tokens"></span></td>
+                    </tr>
+                    <tr>
+                        <td>VRF ID</td>
+                        <td><a href=""><span id="roll-vrfId"></span></a></td>
+                    </tr>
+                    <tr>
+                        <td>HASH</td>
+                        <td><a href=""><span id="roll-hash"></span></a></td>
+                    </tr>
+                </table>           
+                </div>              
+                </td>
+                <td id="hud-center">
+                    <div id="pit">
+                        <table>
+                            <tr>
+                                <td style="width:60%;text-align:center;padding:10px 10px 5px 10px;">
+                                    <div>
+                                        <table class="pit-pot-details">
+                                            <tr>
+                                                <td>                                                   
+                                                    <div id="pit-pot-uid"></div>                                                
+                                                </td>
+                                                <td>
+                                                    <span id="pit-pot-balance"></span>
+                                                    <div id="pit-pot-dice" style="margin-top:5px;"></div>
+                                                </td>
+                                            </tr>
+                                        </table>                                        
+                                    </div>  
+                                </td>
+                                <td style="width:40%;text-align:right;padding:10px 10px 5px 10px;">
+                                    <div id="pit-roll-button">
+                                        <button id="button-roll">ROLL DICE<div style="font-size:.7em;"><span id="pit-pot-entry"></span></div></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                        <table id="pit-dice-results">
+                            <tr>
+                                <td>
+                                    <div class="pit-circle"><span id="di1">?</span></div>
+                                </td>
+                                <td>
+                                    <div class="pit-circle"><span id="di2">?</span></div>
+                                </td>
+                                <td>
+                                    <div class="pit-circle"><span id="di3">?</span></div>
+                                </td>
+                                <td>
+                                    <div class="pit-circle"><span id="di4">?</span></div>
+                                </td>
+                                <td>
+                                    <div class="pit-circle"><span id="di5">?</span></div>
+                                </td>
+                            </tr>
+                        </table>
+                        <div class="pit-box" id="pit-roll-status">
+                            <div id="pot-status">NO POT SELECTED</div>
+                            <img src="img/mine.gif" height="35" id="mining" style="display:none;" />                            
+                        </div>
+                    </div>                   
+                    <div style="margin:0 20px">
+                        <div class="pot-list-header" id="pot-rolls-header">POT ROLLS<span></span></div>
+                        <div id="pot-rolls-scroll">
+                            <div id="pot-history">
+                            </div>
+                        </div>
+                    </div>
+                    <br />
+                </td>
+                <td id="hud-right">   
+                    <div class="pot-list-header" id="pot-header">POTS
+                        <a href="javascript:void(0)" id="pot-backward" onclick="DApp.pagePots(this)" class="backward-btn"><i class="fas fa-backward"></i></a>
+                        <a href="javascript:void(0)" id="pot-forward" onclick="DApp.pagePots(this)" class="forward-btn"><i class="fas fa-forward"></i></a>
+                    </div>
+                    <div style="background-color:#222;">
+                        <table class="tbl">
+                            <tr>
+                                <td>POT</td>
+                                <td># <span id="pot-uid"></span> &nbsp; <a id="btn-pot-select" href="javascript:void(0)" style="color:#F2D718">SELECT</a></td>
+                            </tr>
+                            <tr>
+                                <td>BALANCE</td>
+                                <td><span id="pot-balance" style="font-size:1.5em;"></span> <small>ETH</small></td>
+                            </tr>
+                            <tr>
+                                <td>ENTRY</td>
+                                <td><span id="pot-entry"></span> <small>ETH</small></td>
+                            </tr>
+                            <tr>
+                                <td>SEED</td>
+                                <td><span id="pot-seed"></span>%</td>
+                            </tr>
+                            <tr>
+                                <td>INTERVAL</td>
+                                <td><span id="pot-interval"></span></td>
+                            </tr>
+                            <tr>
+                                <td>OWNER</td>
+                                <td><span id="pot-owner"></span></td>
+                            </tr>
+                            <tr>
+                                <td>MATCH</td>
+                                <td><span id="pot-dice"></span></td>
+                            </tr>
+                            <tr>
+                                <td>QR</td>
+                                <td>
+                                    <div id="pot-qr"></div>
+                                    <div id="pot-link"></div>
+                                </td>
+                            </tr> 
+                        </table>              
+                    </div>
+                    <br />
+                    <div style="color:#ccc;font-size:.8em;margin:5px 0 0 0;padding:10px;text-align: center;"><i class="fas fa-coins"></i> &nbsp; &nbsp; IROLL COMBO REWARDS &nbsp; &nbsp; <i class="fas fa-coins"></i></div>
+                    <table class="token-rewards">
+                        <tr>
+                            <th title="JACKPOT">JACKPOT</th>
+                            <th title="ALL SIXES">ALL 6</th>
+                            <th title="MATCH POT DICE">MATCH</th>
+                            <th title="FOUR OF A KIND">4K</th>
+                        </tr>
+                        <tr>
+                            <td><span id="pot-rwd-jp"></span></td>
+                            <td><span id="pot-rwd-a6"></span></td>
+                            <td><span id="pot-rwd-md"></span></td>
+                            <td><span id="pot-rwd-4k"></span></td>
+                        </tr>                                     
+                    </table>
+                    <table class="token-rewards">
+                        <tr>
+                            <th title="Large Straight">LS</th>
+                            <th title="Full House">FH</th>
+                            <th title="Small Straight">SS</th>
+                            <th title="Three of a Kind">3K</th>
+                            <th title="Two Pair">2P</th>
+                            <th title="One Pair">1P</th>
+                        </tr>
+                        <tr>
+                            <td><span id="pot-rwd-ls"></span></td>
+                            <td><span id="pot-rwd-fh"></span></td>
+                            <td><span id="pot-rwd-ss"></span></td>
+                            <td><span id="pot-rwd-3k"></span></td>
+                            <td><span id="pot-rwd-2p"></span></td>
+                            <td><span id="pot-rwd-1p"></span></td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+        <table id="hud-connect" style="background-color:#222;padding:40px 0;">
+            <tr>
+                <td>
+                    <h2>WELCOME TO IROLL.IO</h2>
+                    <img src="/img/metamask.png" width="100" /><br >
+                    A WALLET PROVIDER LIKE METAMASK IS REQUIRED
+                    <br /><br /><br /><br />
+                    <h2><a onclick="DApp.connect();" href="javascript:void(0);" id="btnNetworkConnect"><u>CLICK HERE TO GET STARTED</u></a></h2>
+                </td>
+            </tr>
+        </table>
+        <br />
+        <br />
+    </main>
+    <footer>
+        <table id="footer">
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+        </table>
+    </footer>
+</div>
+-->
+<script src="web3.min.js"></script>
+<script src="jquery.min.js"></script>
+<script src="qrcode.min.js"></script>
+</body>
+</html>

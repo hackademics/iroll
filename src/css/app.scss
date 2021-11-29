@@ -1,0 +1,97 @@
+
+@use '@material/button/mdc-button';
+@use "@material/button";
+@use "@material/button/styles";
+@use "@material/icon-button";
+@use "@material/top-app-bar/mdc-top-app-bar";
+@use "@material/list";
+@use "@material/tab-scroller/mdc-tab-scroller";
+@use "@material/tab-indicator/mdc-tab-indicator";
+@use "@material/tab/mdc-tab";
+@use "@material/card";
+@use "@material/circular-progress/mdc-circular-progress";
+@use "@material/dialog";
+
+@import "@material/icon-button/mdc-icon-button";
+@import "@material/list/mdc-list";
+@import "@material/card/mdc-card";
+@import "@material/dialog/mdc-dialog";
+
+
+
+
+html{width:100%;margin:0;padding:0;}
+body { 
+  --mdc-theme-background: #32333D;  
+  --mdc-theme-primary: #344955;
+  --mdc-theme-on-primary: #FFFFFF;
+  --mdc-theme-secondary: #54626B;
+  --mdc-theme-on-secondary: #FFFFFF;
+  --mdc-theme-surface:#DFE4E8;
+  --mdc-theme-on-surface:#43484C;
+  --mdc-theme-text-primary-on-light:#ffffff;
+  --mdc-theme-text-secondary-on-light:#5C99CE;
+  --mdc-theme-text-hint-on-light:#ffffff;
+  --mdc-theme-text-disabled-on-light:#ffffff;
+  --mdc-theme-text-icon-on-light:#F5F5F6;
+  --mdc-theme-text-primary-on-dark:#ADADB1;
+  --mdc-theme-text-secondary-on-dark:#ADADB1;
+  --mdc-theme-text-hint-on-dark:#ADADB1;
+  --mdc-theme-text-disabled-on-dark:#ADADB1;
+  --mdc-theme-text-icon-on-dark:#ADADB1;
+  width:100%;
+  margin:0;
+  padding:0; 
+  font-family: 'Roboto Condensed', 'eczar', sans-serif;
+  background-color: #32333D;
+}
+.appbar-button {
+  --mdc-theme-primary: #54626B;
+  --mdc-theme-on-primary: #442C2E;
+  @include button.ink-color(#FFFFFF);
+}
+
+#container{width:500px;margin:0 auto;}
+table {width:100%;padding:0;margin:0;}
+td {vertical-align: top;padding:0;margin:0;}
+footer{width:100%;}
+
+#view-home{display:block;width:100%;text-align: center;}
+#view-pot-list{display:none;width:100%;}
+#view-pot{display:none;width:100%;}
+#view-progress{display:none;width:100%;text-align:center;padding-top:50px;}
+#view-roll-result{display:none;width:100%;}
+#view-error{display:none;width:100%;}
+
+.app-progress { --mdc-theme-primary: #F1F1F1;}
+
+.app-list-item{width:100%;color:#f1f1f1;min-height:80px;}
+.app-list-image{width:120px;float:left;margin-right:8px;}
+.app-list-text{margin-right:8px;float:left;}
+.app-list-text-title{font-size:.98em;}
+.app-list-text-description{font-size:.85em;}
+.app-list-text-balance {font-weight: bold;font-size:1.1em;}
+.app-list-action{float:right;vertical-align:top;width:80px;text-align:right;}
+.app-list-action > span{font-size:.7em;}
+.app-list-action > div{margin-top:10px;}
+
+#app-pot-image{width:100%;height:125px;overflow:hidden;}
+#app-pot-image-src{width:100%;}
+#app-pot-title{font-size:1.8em;vertical-align:bottom;color:#f1f1f1;height:40px;line-height:40px;text-align:center;background-image: linear-gradient(to bottom, rgba(255,0,0,0), rgba(0,0,0,.9));}
+
+#app-pot-table{width:100%;background-color:#f1f1f1;padding:10px;}
+#app-pot-table td:nth-child(1){width:45%;padding-right:20px;}
+#app-pot-table td:nth-child(2){width:55%;}
+
+#app-pot-jackpots{width:100%;}
+#app-pot-rewards{width:100%;}
+#app-pot-rewards th:nth-child(1){text-align:left;}
+#app-pot-rewards td{text-align:center;}
+#app-pot-rewards td:nth-child(1){text-align:left;width:60%;}
+#app-pot-rewards td:nth-child(3){font-size:.8em;color:red;}
+#app-pot-settings{width:100%;margin-top:20px;}
+
+#app-pot-rolls{width:100%}
+
+#app-dice{width:100%;}
+#app-dice td{text-align: center;}

@@ -1,7 +1,8 @@
+require('dotenv').config();
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const infuraProjectID = process.env.INFURA_PROJECTID;
 const etherscanApi = process.env.ETHERSCAN_API;
-const mnemonic = process.env.DEV_MNEMONIC;
+const dev_mnemonic = process.env.MNEMONIC;
 
 module.exports = {
 
@@ -14,45 +15,66 @@ module.exports = {
       gas: 6721975
     },
     ropsten: {
-      provider: () => new HDWalletProvider(mnemonic, 'https://ropsten.infura.io/v3/${infuraProjectID}'),
+      provider: () => new HDWalletProvider({
+        mnemonic: { phrase: dev_mnemonic },
+        providerOrUrl: 'https://ropsten.infura.io/v3/' + infuraProjectID,
+        numberOfAddresses: 1,
+        shareNonce: true
+      }),
       network_id: 3,
-      gas: 5500000,        
-      confirmations: 2,    
+      gas: 5500000,          
       timeoutBlocks: 200,  
       skipDryRun: true,
       websockets: true
      },
     rinkeby: {
-      provider: () => new HDWalletProvider(mnemonic, 'https://rinkeby.infura.io/v3/${infuraProjectID}'),
+      provider: () => new HDWalletProvider({
+        mnemonic: { phrase: dev_mnemonic},
+        providerOrUrl: 'https://rinkeby.infura.io/v3/' + infuraProjectID,
+        numberOfAddresses: 1,
+        shareNonce: true
+      }),
       port: 8545,
       network_id: 4,
       gas: 4612388,
-      gasPrice: 10000000000,
-      confirmations: 2,
       timeoutBlocks: 200,
       skipDryRun: true,
       websockets: true
     },
     kovan: {
-      provider: () => new HDWalletProvider(mnemonic, 'https://kovan.infura.io/v3/${infuraProjectID}'),
+      provider: () => new HDWalletProvider({
+        mnemonic: { phrase: dev_mnemonic },
+        providerOrUrl: 'https://kovan.infura.io/v3/' + infuraProjectID,
+        numberOfAddresses: 1,
+        shareNonce: true
+      }),
       network_id: 42,
+      gas: 5500000,
+      timeoutBlocks: 200,
+      skipDryRun: true,
+      websockets: true
+    },
+    arbitrumrinkeby: {
+      provider: () => new HDWalletProvider({
+        mnemonic: { phrase: dev_mnemonic },
+        providerOrUrl: 'https://arbitrum-rinkeby.infura.io/v3/' + infuraProjectID,
+        numberOfAddresses: 1,
+        shareNonce: true
+      }),
+      network_id: 421611,
       gas: 5500000,
       confirmations: 2,
       timeoutBlocks: 200,
       skipDryRun: true,
       websockets: true
     },
-    arbitrumrinkeby: {
-      provider: () => new HDWalletProvider(mnemonic, 'https://arbitrum-rinkeby.infura.io/v3/${infuraProjectID}'),
-      network_id: 80001,
-      gas: 421611,
-      confirmations: 2,
-      timeoutBlocks: 200,
-      skipDryRun: true,
-      websockets: true
-    },
     arbitrummainnet: {
-      provider: () => new HDWalletProvider(mnemonic, 'https://arbitrum-mainnet.infura.io/v3/${infuraProjectID}'),
+      provider: () => new HDWalletProvider({
+        mnemonic: { phrase: dev_mnemonic },
+        providerOrUrl: 'https://arbitrum-mainnet.infura.io/v3/' + infuraProjectID,
+        numberOfAddresses: 1,
+        shareNonce: true
+      }),
       network_id: 42161,
       gas: 5500000,
       confirmations: 2,
@@ -61,7 +83,12 @@ module.exports = {
       websockets: true
     },
     polygonmumbai: {
-      provider: () => new HDWalletProvider(mnemonic, 'https://polygon-mumbai.infura.io/v3/${infuraProjectID}'),
+      provider: () => new HDWalletProvider({
+        mnemonic: { phrase: dev_mnemonic },
+        providerOrUrl: 'https://polygon-mumbai.infura.io/v3/' + infuraProjectID,
+        numberOfAddresses: 1,
+        shareNonce: true
+      }),
       network_id: 80001,
       gas: 5500000,
       confirmations: 2,
@@ -70,7 +97,12 @@ module.exports = {
       websockets: true
     },
     polygonmainnet: {
-      provider: () => new HDWalletProvider(mnemonic, 'https://polygon-mainnet.infura.io/v3/${infuraProjectID}'),
+      provider: () => new HDWalletProvider({
+        mnemonic: { phrase: dev_mnemonic },
+        providerOrUrl: 'https://polygon-mainnet.infura.io/v3/' + infuraProjectID,
+        numberOfAddresses: 1,
+        shareNonce: true
+      }),
       network_id: 137,
       gas: 5500000,
       confirmations: 2,
@@ -79,7 +111,12 @@ module.exports = {
       websockets: true
     }, 
     mainnet: {
-      provider: () => new HDWalletProvider(mnemonic, 'https://mainnet.infura.io/v3/${infuraProjectID}'),
+      provider: () => new HDWalletProvider({
+        mnemonic: { phrase: dev_mnemonic },
+        providerOrUrl: 'https://mainnet.infura.io/v3/' + infuraProjectID,
+        numberOfAddresses: 1,
+        shareNonce: true
+      }),
       network_id: 1,
       port: 8545,
       gas: 5500000,
@@ -118,7 +155,7 @@ module.exports = {
        settings: {
         optimizer: {
           enabled: true,
-          runs: 600
+          runs: 5000
         },
         metadata: { bytecodeHash: 'none' },
         evmVersion: "constantinople"
