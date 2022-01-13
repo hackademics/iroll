@@ -11,8 +11,10 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta2/css/all.min.css" />
     <link rel="stylesheet" href="bundle.css" />    
+    <script src="https://threejs.org/build/three.js"></script>
 <script defer src="bundle.js"></script></head>
 <body>
+    <!--
 <div id="container">
     <header class="mdc-top-app-bar mdc-top-app-bar--fixed mdc-top-app-bar--dense" style="width:500px;">
         <div class="mdc-top-app-bar__row">
@@ -229,6 +231,13 @@
         <div class="mdc-dialog__scrim"></div>
     </div>
 </div>
+-->
+
+
+
+
+
+
 <!--
 <ul class="mdc-list mdc-list--two-line">
     <li class="mdc-list-item" tabindex="0">
@@ -496,5 +505,53 @@
 <script src="web3.min.js"></script>
 <script src="jquery.min.js"></script>
 <script src="qrcode.min.js"></script>
+<script>
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 100);
+    var renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    //load backgorund
+    const backgroundImage = new THREE.TextureLoader().load('background.jpg');
+    scene.background = backgroundImage;
+
+    //load dice side images
+    var textureLoader = new THREE.TextureLoader();
+
+    var texture1 = textureLoader.load('./d-1.png');
+    var texture2 = textureLoader.load('./d-2.png');
+    var texture3 = textureLoader.load('./d-3.png');
+    var texture4 = textureLoader.load('./d-4.png');
+    var texture5 = textureLoader.load('./d-5.png');
+    var texture6 = textureLoader.load('./d-6.png');
+
+    var materials = [
+        new THREE.MeshBasicMaterial({ map: texture1 }),
+        new THREE.MeshBasicMaterial({ map: texture6 }),
+        new THREE.MeshBasicMaterial({ map: texture2 }),
+        new THREE.MeshBasicMaterial({ map: texture5 }),
+        new THREE.MeshBasicMaterial({ map: texture3 }),
+        new THREE.MeshBasicMaterial({ map: texture4 })
+    ];
+    var faceMaterial = new THREE.MeshFaceMaterial(materials);
+    var geometry = new THREE.BoxGeometry(1, 1, 1);
+
+    var dice1 = new THREE.Mesh(geometry, faceMaterial);    
+    scene.add(dice1);  
+
+    camera.position.z = 5;
+
+    var animate = function () {
+        requestAnimationFrame(animate);
+
+        dice1.rotation.x += 0.01;
+        dice1.rotation.y += 0.01;
+
+        renderer.render(scene, camera);
+    };
+
+    animate();
+</script>
 </body>
 </html>

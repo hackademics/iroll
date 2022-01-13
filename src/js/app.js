@@ -1,22 +1,22 @@
 import { MDCTopAppBar } from '@material/top-app-bar';
-const topAppBarElement = document.querySelector('.mdc-top-app-bar');
-const topAppBar = new MDCTopAppBar(topAppBarElement);
+//const topAppBarElement = document.querySelector('.mdc-top-app-bar');
+////const topAppBar = new MDCTopAppBar(topAppBarElement);
 
 import { MDCRipple } from '@material/ripple';
-const buttonRipple = new MDCRipple(document.querySelector('.mdc-button'));
+//const buttonRipple = new MDCRipple(document.querySelector('.mdc-button'));
 
 //import { MDCList } from '@material/list';
 //const list = new MDCList(document.querySelector('.mdc-list'));
 //list.singleSelection = true;
 
 import { MDCCircularProgress } from '@material/circular-progress';
-const circularProgress = new MDCCircularProgress(document.querySelector('.mdc-circular-progress'));
-circularProgress.open();
-circularProgress.determinate = false;
-circularProgress.progress = 1;
+//const circularProgress = new MDCCircularProgress(document.querySelector('.mdc-circular-progress'));
+//circularProgress.open();
+//circularProgress.determinate = false;
+//circularProgress.progress = 1;
 
 import { MDCDialog } from '@material/dialog';
-const dialog = new MDCDialog(document.querySelector('.mdc-dialog'));
+//const dialog = new MDCDialog(document.querySelector('.mdc-dialog'));
 
 //import { MDCTabBar } from '@material/tab-bar';
 //const tabBar = new MDCTabBar(document.querySelector('.mdc-tab-bar'));

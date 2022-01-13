@@ -1,12 +1,21 @@
+/// @title IROLL Truffle Migration scripts
+/// @author Richard Waldvogel
+/// @notice Migrate contracts with network settings
 require('@openzeppelin/test-helpers/configure')({ provider: web3.currentProvider, environment: 'truffle' });
 
+/// @dev OpenZeppelin Test Helpers
 const { singletons } = require('@openzeppelin/test-helpers');
 
+/// @dev Dice Library
 const Dice = artifacts.require("./contracts/library/Dice.sol");
+/// @dev IRoll Contract
 const IRoll = artifacts.require("./contracts/IRoll.sol");
+/// @dev IROLL ERC-20 Token Contract
 const IRollToken = artifacts.require("./contracts/token/IRollToken.sol");
+/// @dev Chainlink VRF Wrapper Contract
 const IRollVRF = artifacts.require("./contracts/token/IRollVRF.sol");
 
+/// @notice Module Exports with Deployer, Network and Accountss
 module.exports = async (deployer, network, accounts) => {  
   
   let vrfToken = '0x01BE23585060835E02B77ef475b0Cc51aA1e0709';
